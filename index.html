@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sistema de Pedidos de Material</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f5f4f1; --surface: #ffffff;
+    --border: rgba(0,0,0,0.10); --border-md: rgba(0,0,0,0.18);
+    --text: #1a1a18; --text-muted: #7a7870;
+    --green: #0F6E56; --green-light: #E1F5EE; --green-dark: #085041;
+    --blue: #185FA5; --blue-light: #E6F1FB; --blue-dark: #0C447C;
+    --amber-bg: #FAEEDA; --amber-text: #633806;
+    --red-bg: #FCEBEB; --red-text: #791F1F;
+    --radius: 8px; --radius-lg: 12px;
+    --font: 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'Courier New', monospace;
+  }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; padding: 1.5rem 1rem; }
+  .app { max-width: 860px; margin: 0 auto; }
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 0.5px solid var(--border); flex-wrap: wrap; gap: 12px; }
+  .header-left { display: flex; align-items: center; gap: 10px; }
+  .logo { width: 38px; height: 38px; background: var(--green); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; color: var(--green-light); font-size: 20px; }
+  .title { font-size: 18px; font-weight: 600; color: var(--text); }
+  .subtitle { font-size: 13px; color: var(--text-muted); }
+  .nav { display: flex; gap: 6px; flex-wrap: wrap; }
+  .nav-btn { padding: 7px 13px; border-radius: var(--radius); border: 0.5px solid var(--border-md); background: transparent; font-size: 13px; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background .15s, color .15s; font-family: var(--font); }
+  .nav-btn:hover { background: rgba(0,0,0,0.04); }
+  .nav-btn.active { background: var(--green); color: var(--green-light); border-color: var(--green); font-weight: 500; }
+  .nav-btn.estoque-tab.active { background: var(--blue); border-color: var(--blue); color: var(--blue-light); }
+  .section { display: none; } .section.active { display: block; }
+  .card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+  .card-title { font-size: 15px; font-weight: 500; margin-bottom: 1rem; color: var(--text); display: flex; align-items: center; gap: 8px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .form-full { margin-bottom: 12px; }
+  label { font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 5px; }
+  input, select, textarea { width: 100%; padding: 8px 10px; border: 0.5px solid var(--border-md); border-radius: var(--radius); font-size: 14px; background: var(--surface); color: var(--text); font-family: var(--font); transition: border-color .15s; }
+  textarea { resize: vertical; min-height: 72px; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--green); }
+  .btn-green { background: var(--green); color: var(--green-light); border: none; padding: 9px 18px; border-radius: var(--radius); font-size: 14px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; transition: opacity .15s; font-family: var(--font); }
+  .btn-green:hover { opacity: .87; }
+  .btn-blue { background: var(--blue); color: var(--blue-light); border: none; padding: 9px 18px; border-radius: var(--radius); font-size: 14px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; transition: opacity .15s; font-family: var(--font); }
+  .btn-blue:hover { opacity: .87; }
+  .rm-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 16px; padding: 2px; display: flex; }
+  .rm-btn:hover { color: #A32D2D; }
+  .mat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 8px; margin-bottom: 12px; }
+  .mat-chip { padding: 8px 10px; border: 0.5px solid var(--border-md); border-radius: var(--radius); background: var(--surface); font-size: 13px; color: var(--text-muted); cursor: pointer; text-align: left; transition: all .15s; display: flex; align-items: center; gap: 6px; font-family: var(--font); }
+  .mat-chip:hover { border-color: var(--green); color: var(--green); background: var(--green-light); }
+  .divider { text-align: center; font-size: 12px; color: var(--text-muted); margin: 12px 0; position: relative; }
+  .divider::before, .divider::after { content: ''; position: absolute; top: 50%; width: 43%; height: 0.5px; background: var(--border); }
+  .divider::before { left: 0; } .divider::after { right: 0; }
+  .items-list { display: flex; flex-direction: column; gap: 7px; margin-bottom: 14px; }
+  .item-row { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--bg); border-radius: var(--radius); border: 0.5px solid var(--border); }
+  .item-name { flex: 1; font-size: 14px; color: var(--text); }
+  .item-qty { font-size: 13px; color: var(--text-muted); min-width: 55px; text-align: right; }
+  .inline-add { display: flex; gap: 8px; }
+  .inline-add input { flex: 1; }
+  .qty-sm { width: 78px !important; flex: none !important; }
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+  .stat-card { background: var(--bg); border-radius: var(--radius); padding: .9rem; }
+  .stat-val { font-size: 24px; font-weight: 500; color: var(--text); }
+  .stat-lbl { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .filter-row { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
+  .filter-input { flex: 1; min-width: 130px; padding: 8px 10px; border: 0.5px solid var(--border-md); border-radius: var(--radius); font-size: 14px; background: var(--surface); color: var(--text); font-family: var(--font); }
+  .filter-input:focus { outline: none; border-color: var(--green); }
+  .pedidos-list { display: flex; flex-direction: column; gap: 10px; }
+  .pedido-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; }
+  .pedido-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
+  .pedido-id { font-size: 12px; font-weight: 500; color: var(--text-muted); font-family: var(--font-mono); }
+  .pedido-tecnico { font-size: 15px; font-weight: 500; color: var(--text); }
+  .pedido-data { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 500; }
+  .badge-pendente { background: var(--amber-bg); color: var(--amber-text); }
+  .badge-separado { background: var(--blue-light); color: var(--blue-dark); }
+  .badge-retirado { background: #EAF3DE; color: #27500A; }
+  .badge-cancelado { background: var(--red-bg); color: var(--red-text); }
+  .pedido-mats { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+  .mat-tag { background: var(--bg); border: 0.5px solid var(--border); border-radius: 99px; padding: 3px 10px; font-size: 12px; color: var(--text-muted); }
+  .pedido-obs { font-size: 13px; color: var(--text-muted); font-style: italic; margin-top: 6px; padding-top: 8px; border-top: 0.5px solid var(--border); }
+  .actions-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 0.5px solid var(--border); flex-wrap: wrap; }
+  .estoque-header { background: var(--blue-light); border-radius: var(--radius); padding: .75rem 1rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 10px; border: 0.5px solid #B5D4F4; }
+  .estoque-badge { background: var(--blue); color: var(--blue-light); font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 99px; }
+  .cat-row { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--bg); border-radius: var(--radius); border: 0.5px solid var(--border); margin-bottom: 6px; }
+  .empty { text-align: center; padding: 2.5rem 1rem; color: var(--text-muted); font-size: 14px; }
+  .empty i { font-size: 36px; display: block; margin-bottom: 10px; opacity: .35; }
+  .toast { position: fixed; bottom: 20px; right: 20px; padding: 10px 16px; border-radius: var(--radius); font-size: 14px; font-weight: 500; display: none; z-index: 999; align-items: center; gap: 8px; box-shadow: 0 4px 20px rgba(0,0,0,.18); }
+  .toast.show { display: flex; }
+  .toast-green { background: var(--green); color: var(--green-light); }
+  .toast-blue { background: var(--blue); color: var(--blue-light); }
+  .toast-red { background: #A32D2D; color: #FCEBEB; }
+  .loading-overlay { position: fixed; inset: 0; background: rgba(245,244,241,0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; gap: 12px; }
+  .spinner { width: 36px; height: 36px; border: 3px solid var(--border-md); border-top-color: var(--green); border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-txt { font-size: 14px; color: var(--text-muted); }
+  .sync-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--green); background: var(--green-light); padding: 3px 10px; border-radius: 99px; margin-left: 8px; }
+  @media (max-width: 600px) { .stats-grid { grid-template-columns: repeat(2,1fr); } .form-row { grid-template-columns: 1fr; } .header { flex-direction: column; align-items: flex-start; } }
+</style>
+</head>
+<body>
+
+<div id="loading-overlay" class="loading-overlay">
+  <div class="spinner"></div>
+  <div class="loading-txt">Conectando ao Firebase...</div>
+</div>
+
+<div class="app">
+  <div class="header">
+    <div class="header-left">
+      <div class="logo"><i class="ti ti-package"></i></div>
+      <div>
+        <div class="title">Pedidos de Material <span class="sync-badge"><i class="ti ti-cloud"></i> Firebase</span></div>
+        <div class="subtitle" id="header-sub">Provedor de Materiais</div>
+      </div>
+    </div>
+    <div class="nav">
+      <button class="nav-btn active" onclick="showSection('novo')" id="tab-novo"><i class="ti ti-plus"></i> Novo pedido</button>
+      <button class="nav-btn" onclick="showSection('pedidos')" id="tab-pedidos"><i class="ti ti-list"></i> Todos os pedidos</button>
+      <button class="nav-btn estoque-tab" onclick="showSection('estoque')" id="tab-estoque"><i class="ti ti-forklift"></i> Área do estoque</button>
+      <button class="nav-btn" onclick="showSection('catalogo')" id="tab-catalogo"><i class="ti ti-box"></i> Catálogo</button>
+    </div>
+  </div>
+
+  <!-- NOVO PEDIDO -->
+  <div class="section active" id="sec-novo">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-user"></i> Identificação do técnico</div>
+      <div class="form-full">
+        <label>Seu nome</label>
+        <input type="text" id="tecnico-nome" placeholder="Digite seu nome completo" />
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-box"></i> Materiais do pedido</div>
+      <label style="margin-bottom:8px">Clique para adicionar do catálogo</label>
+      <div class="mat-grid" id="mat-grid"></div>
+      <div class="divider">ou adicione manualmente</div>
+      <div class="inline-add" style="margin-top:4px">
+        <input type="text" id="mat-manual" placeholder="Nome do material..." />
+        <input type="number" id="mat-qty" class="qty-sm" placeholder="Qtd" min="1" value="1" />
+        <button class="btn-green" onclick="addItemManual()"><i class="ti ti-plus"></i> Add</button>
+      </div>
+      <div style="margin-top:1rem">
+        <div id="items-list" class="items-list"></div>
+        <div id="items-empty" style="font-size:13px;color:var(--text-muted);padding:10px 0;display:none">Nenhum material adicionado ainda.</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-notes"></i> Observação</div>
+      <textarea id="obs" placeholder="Justificativa, local de entrega, detalhes adicionais..."></textarea>
+    </div>
+    <button class="btn-green" style="width:100%;justify-content:center;padding:12px;font-size:15px" onclick="enviarPedido()">
+      <i class="ti ti-send"></i> Enviar pedido
+    </button>
+  </div>
+
+  <!-- TODOS OS PEDIDOS -->
+  <div class="section" id="sec-pedidos">
+    <div class="stats-grid" id="stats-grid"></div>
+    <div class="filter-row">
+      <input class="filter-input" type="text" id="filtro-tecnico" placeholder="Filtrar por técnico..." oninput="renderPedidos()" />
+      <select id="filtro-status" onchange="renderPedidos()" style="padding:8px 10px;font-size:14px;border-radius:var(--radius);border:0.5px solid var(--border-md);background:var(--surface);color:var(--text)">
+        <option value="">Todos os status</option>
+        <option value="pendente">Pendente</option>
+        <option value="separado">Separado</option>
+        <option value="retirado">Retirado</option>
+        <option value="cancelado">Cancelado</option>
+      </select>
+    </div>
+    <div class="pedidos-list" id="pedidos-list"></div>
+  </div>
+
+  <!-- ÁREA DO ESTOQUE -->
+  <div class="section" id="sec-estoque">
+    <div class="estoque-header">
+      <i class="ti ti-forklift" style="font-size:20px;color:var(--blue)"></i>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:500;color:var(--blue-dark)">Área do funcionário de estoque</div>
+        <div style="font-size:12px;color:var(--blue)">Gerencie a separação e confirmação de retirada dos pedidos</div>
+      </div>
+      <span class="estoque-badge">ESTOQUE</span>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-user"></i> Identificação do funcionário</div>
+      <div class="form-full">
+        <label>Seu nome (funcionário de estoque)</label>
+        <input type="text" id="estoque-nome" placeholder="Digite seu nome" />
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-clock"></i> Pedidos pendentes de separação</div>
+      <div id="lista-pendentes"></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-check"></i> Pedidos separados — aguardando retirada</div>
+      <div id="lista-separados"></div>
+    </div>
+  </div>
+
+  <!-- CATÁLOGO -->
+  <div class="section" id="sec-catalogo">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-plus"></i> Adicionar material ao catálogo</div>
+      <div class="form-row">
+        <div>
+          <label>Nome do material</label>
+          <input type="text" id="cat-nome" placeholder="Ex: Cabo UTP Cat6" />
+        </div>
+        <div>
+          <label>Categoria</label>
+          <input type="text" id="cat-cat" placeholder="Ex: Cabos e conectores" />
+        </div>
+      </div>
+      <button class="btn-green" onclick="addCatalogo()"><i class="ti ti-plus"></i> Adicionar ao catálogo</button>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-list"></i> Materiais cadastrados</div>
+      <div id="cat-list"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i> <span id="toast-msg"></span></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+  import {
+    getFirestore, collection, doc, addDoc, updateDoc, deleteDoc,
+    onSnapshot, query, orderBy, serverTimestamp, getDocs
+  } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBCF3WLMNxbsUih3Gg9V2EQVWvo7Rr2Ers",
+    authDomain: "pedidosmaterial-b97f5.firebaseapp.com",
+    projectId: "pedidosmaterial-b97f5",
+    storageBucket: "pedidosmaterial-b97f5.firebasestorage.app",
+    messagingSenderId: "803568374697",
+    appId: "1:803568374697:web:29001b826d0106bdf36ab8"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // ── Estado local ──────────────────────────────────────────────
+  let pedidos = [];
+  let catalogo = [];
+  let itensPedido = [];
+
+  // ── Helpers UI ────────────────────────────────────────────────
+  const subs = { novo:'Técnico — novo pedido', pedidos:'Todos os pedidos', estoque:'Funcionário de estoque', catalogo:'Catálogo de materiais' };
+
+  window.showSection = function(s) {
+    ['novo','pedidos','estoque','catalogo'].forEach(k => {
+      document.getElementById('sec-'+k).classList.toggle('active', k===s);
+      document.getElementById('tab-'+k).classList.toggle('active', k===s);
+    });
+    document.getElementById('header-sub').textContent = subs[s] || '';
+    if (s==='pedidos') { renderStats(); renderPedidos(); }
+    if (s==='catalogo') renderCatalogo();
+    if (s==='novo') renderCatalogChips();
+    if (s==='estoque') renderEstoque();
+  };
+
+  function toast(msg, tipo) {
+    const t = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    t.className = 'toast show toast-' + (tipo || 'green');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+  window.toast = toast;
+
+  function badgeFor(s) {
+    const labels = { pendente:'Pendente', separado:'Separado', retirado:'Retirado', cancelado:'Cancelado' };
+    return `<span class="badge badge-${s}">${labels[s]||s}</span>`;
+  }
+
+  // ── Catálogo ──────────────────────────────────────────────────
+  function renderCatalogChips() {
+    document.getElementById('mat-grid').innerHTML = catalogo.map(m =>
+      `<button class="mat-chip" onclick="addItemFromCat('${m.id}')">
+        <i class="ti ti-package" style="font-size:13px;opacity:.5"></i>${m.nome}
+      </button>`
+    ).join('') || '<span style="font-size:13px;color:var(--text-muted)">Nenhum material no catálogo ainda.</span>';
+  }
+
+  window.addItemFromCat = function(id) {
+    const m = catalogo.find(x => x.id === id);
+    if (!m) return;
+    const ex = itensPedido.find(x => x.nome === m.nome);
+    if (ex) ex.qty++; else itensPedido.push({ nome: m.nome, qty: 1 });
+    renderItems();
+  };
+
+  window.addItemManual = function() {
+    const n = document.getElementById('mat-manual').value.trim();
+    const q = parseInt(document.getElementById('mat-qty').value) || 1;
+    if (!n) return;
+    const ex = itensPedido.find(x => x.nome.toLowerCase() === n.toLowerCase());
+    if (ex) ex.qty += q; else itensPedido.push({ nome: n, qty: q });
+    document.getElementById('mat-manual').value = '';
+    document.getElementById('mat-qty').value = 1;
+    renderItems();
+  };
+
+  document.getElementById('mat-manual').addEventListener('keydown', e => { if (e.key==='Enter') window.addItemManual(); });
+
+  function renderItems() {
+    const list = document.getElementById('items-list');
+    const empty = document.getElementById('items-empty');
+    if (!itensPedido.length) { list.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    list.innerHTML = itensPedido.map((it, i) =>
+      `<div class="item-row">
+        <span class="item-name"><i class="ti ti-package" style="font-size:13px;opacity:.45;margin-right:6px"></i>${it.nome}</span>
+        <span class="item-qty">${it.qty} un.</span>
+        <button class="rm-btn" onclick="removeItem(${i})" title="Remover"><i class="ti ti-x"></i></button>
+      </div>`
+    ).join('');
+  }
+
+  window.removeItem = function(i) { itensPedido.splice(i, 1); renderItems(); };
+
+  window.addCatalogo = async function() {
+    const nome = document.getElementById('cat-nome').value.trim();
+    const cat = document.getElementById('cat-cat').value.trim();
+    if (!nome) { toast('Informe o nome do material.', 'red'); return; }
+    try {
+      await addDoc(collection(db, 'catalogo'), { nome, categoria: cat || 'Geral', criadoEm: serverTimestamp() });
+      document.getElementById('cat-nome').value = '';
+      document.getElementById('cat-cat').value = '';
+      toast('Material adicionado ao catálogo!', 'green');
+    } catch(e) { toast('Erro ao salvar: ' + e.message, 'red'); }
+  };
+
+  window.removeCatalogo = async function(id) {
+    try {
+      await deleteDoc(doc(db, 'catalogo', id));
+      toast('Material removido.', 'green');
+    } catch(e) { toast('Erro ao remover.', 'red'); }
+  };
+
+  function renderCatalogo() {
+    const el = document.getElementById('cat-list');
+    if (!catalogo.length) { el.innerHTML = `<div class="empty"><i class="ti ti-box"></i>Nenhum material cadastrado.</div>`; return; }
+    el.innerHTML = catalogo.map(m =>
+      `<div class="cat-row">
+        <i class="ti ti-package" style="font-size:15px;opacity:.45"></i>
+        <span style="flex:1;font-size:14px;color:var(--text)">${m.nome}</span>
+        <span style="font-size:12px;color:var(--text-muted);margin-right:10px">${m.categoria}</span>
+        <button class="rm-btn" onclick="removeCatalogo('${m.id}')" title="Remover"><i class="ti ti-x"></i></button>
+      </div>`
+    ).join('');
+  }
+
+  // ── Pedidos ───────────────────────────────────────────────────
+  window.enviarPedido = async function() {
+    const nome = document.getElementById('tecnico-nome').value.trim();
+    if (!nome) { toast('Informe seu nome antes de enviar.', 'red'); return; }
+    if (!itensPedido.length) { toast('Adicione ao menos um material.', 'red'); return; }
+    const obs = document.getElementById('obs').value.trim();
+    const seq = pedidos.length + 1;
+    const id = 'PD' + String(seq).padStart(4, '0');
+    try {
+      await addDoc(collection(db, 'pedidos'), {
+        id, tecnico: nome, itens: [...itensPedido], obs,
+        status: 'pendente',
+        data: new Date().toLocaleString('pt-BR'),
+        criadoEm: serverTimestamp(),
+        separadoPor: null, dataRetirada: null, retiradoPor: null
+      });
+      itensPedido = [];
+      document.getElementById('obs').value = '';
+      renderItems();
+      toast('Pedido ' + id + ' enviado!', 'green');
+      setTimeout(() => showSection('pedidos'), 1100);
+    } catch(e) { toast('Erro ao enviar: ' + e.message, 'red'); }
+  };
+
+  function renderStats() {
+    const total = pedidos.length;
+    const pendente = pedidos.filter(p => p.status==='pendente').length;
+    const separado = pedidos.filter(p => p.status==='separado').length;
+    const retirado = pedidos.filter(p => p.status==='retirado').length;
+    document.getElementById('stats-grid').innerHTML = `
+      <div class="stat-card"><div class="stat-val">${total}</div><div class="stat-lbl">Total</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:var(--amber-text)">${pendente}</div><div class="stat-lbl">Pendentes</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:var(--blue-dark)">${separado}</div><div class="stat-lbl">Separados</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:#27500A">${retirado}</div><div class="stat-lbl">Retirados</div></div>
+    `;
+  }
+
+  function renderPedidos() {
+    const ft = document.getElementById('filtro-tecnico').value.toLowerCase();
+    const fs = document.getElementById('filtro-status').value;
+    const lista = pedidos.filter(p => (!ft || p.tecnico.toLowerCase().includes(ft)) && (!fs || p.status===fs));
+    const el = document.getElementById('pedidos-list');
+    if (!lista.length) { el.innerHTML = `<div class="empty"><i class="ti ti-inbox"></i>Nenhum pedido encontrado.</div>`; return; }
+    el.innerHTML = lista.map(p => {
+      let extra = '';
+      if (p.separadoPor) extra += `<div style="font-size:12px;color:var(--text-muted);margin-top:4px"><i class="ti ti-user" style="font-size:12px;margin-right:3px"></i>Separado por <strong style="color:var(--text)">${p.separadoPor}</strong></div>`;
+      if (p.retiradoPor) extra += `<div style="font-size:12px;color:var(--text-muted);margin-top:2px"><i class="ti ti-package-export" style="font-size:12px;margin-right:3px"></i>Retirado por <strong style="color:var(--text)">${p.retiradoPor}</strong> em ${p.dataRetirada}</div>`;
+      return `<div class="pedido-card">
+        <div class="pedido-header">
+          <div><div class="pedido-id">${p.id}</div><div class="pedido-tecnico">${p.tecnico}</div>${extra}</div>
+          <div style="text-align:right">${badgeFor(p.status)}<div class="pedido-data" style="margin-top:4px">${p.data}</div></div>
+        </div>
+        <div class="pedido-mats">${p.itens.map(it=>`<span class="mat-tag">${it.nome} × ${it.qty}</span>`).join('')}</div>
+        ${p.obs?`<div class="pedido-obs"><i class="ti ti-notes" style="font-size:12px;margin-right:4px"></i>${p.obs}</div>`:''}
+      </div>`;
+    }).join('');
+  }
+
+  function renderEstoque() {
+    const pendentes = pedidos.filter(p => p.status==='pendente');
+    const separados = pedidos.filter(p => p.status==='separado');
+    const elP = document.getElementById('lista-pendentes');
+    const elS = document.getElementById('lista-separados');
+
+    elP.innerHTML = !pendentes.length
+      ? `<div class="empty" style="padding:1.5rem"><i class="ti ti-circle-check"></i>Nenhum pedido pendente.</div>`
+      : pendentes.map(p => `
+          <div class="pedido-card" style="margin-bottom:10px">
+            <div class="pedido-header">
+              <div><div class="pedido-id">${p.id}</div><div class="pedido-tecnico">${p.tecnico}</div></div>
+              <div style="text-align:right">${badgeFor(p.status)}<div class="pedido-data" style="margin-top:4px">${p.data}</div></div>
+            </div>
+            <div class="pedido-mats">${p.itens.map(it=>`<span class="mat-tag">${it.nome} × ${it.qty}</span>`).join('')}</div>
+            ${p.obs?`<div class="pedido-obs"><i class="ti ti-notes" style="font-size:12px;margin-right:4px"></i>${p.obs}</div>`:''}
+            <div class="actions-row">
+              <span style="font-size:12px;color:var(--text-muted);flex:1">Marque como separado após reunir os materiais</span>
+              <button class="btn-blue" onclick="marcarSeparado('${p._docId}')"><i class="ti ti-check"></i> Marcar como separado</button>
+            </div>
+          </div>`
+        ).join('');
+
+    elS.innerHTML = !separados.length
+      ? `<div class="empty" style="padding:1.5rem"><i class="ti ti-inbox"></i>Nenhum pedido aguardando retirada.</div>`
+      : separados.map(p => `
+          <div class="pedido-card" style="margin-bottom:10px;border-color:var(--blue);border-width:1.5px">
+            <div class="pedido-header">
+              <div>
+                <div class="pedido-id">${p.id}</div>
+                <div class="pedido-tecnico">${p.tecnico}</div>
+                ${p.separadoPor?`<div style="font-size:12px;color:var(--text-muted);margin-top:2px"><i class="ti ti-user" style="font-size:12px;margin-right:3px"></i>Separado por <strong style="color:var(--text)">${p.separadoPor}</strong></div>`:''}
+              </div>
+              <div style="text-align:right">${badgeFor(p.status)}<div class="pedido-data" style="margin-top:4px">${p.data}</div></div>
+            </div>
+            <div class="pedido-mats">${p.itens.map(it=>`<span class="mat-tag">${it.nome} × ${it.qty}</span>`).join('')}</div>
+            ${p.obs?`<div class="pedido-obs"><i class="ti ti-notes" style="font-size:12px;margin-right:4px"></i>${p.obs}</div>`:''}
+            <div class="actions-row">
+              <span style="font-size:12px;color:var(--blue);flex:1"><i class="ti ti-clock" style="font-size:13px;margin-right:3px"></i>Aguardando o técnico retirar</span>
+              <button class="btn-green" onclick="confirmarRetirada('${p._docId}')"><i class="ti ti-package-export"></i> Confirmar retirada</button>
+            </div>
+          </div>`
+        ).join('');
+  }
+
+  function getNomeEstoque() {
+    const n = document.getElementById('estoque-nome').value.trim();
+    if (!n) { toast('Informe seu nome antes de continuar.', 'red'); return null; }
+    return n;
+  }
+
+  window.marcarSeparado = async function(docId) {
+    const nome = getNomeEstoque(); if (!nome) return;
+    try {
+      await updateDoc(doc(db, 'pedidos', docId), { status: 'separado', separadoPor: nome });
+      toast('Pedido marcado como separado!', 'blue');
+    } catch(e) { toast('Erro: ' + e.message, 'red'); }
+  };
+
+  window.confirmarRetirada = async function(docId) {
+    const nome = getNomeEstoque(); if (!nome) return;
+    try {
+      await updateDoc(doc(db, 'pedidos', docId), {
+        status: 'retirado',
+        retiradoPor: nome,
+        dataRetirada: new Date().toLocaleString('pt-BR')
+      });
+      toast('Retirada confirmada!', 'green');
+    } catch(e) { toast('Erro: ' + e.message, 'red'); }
+  };
+
+  // ── Listeners em tempo real ───────────────────────────────────
+  async function init() {
+    // Catalogo
+    onSnapshot(query(collection(db, 'catalogo'), orderBy('criadoEm', 'asc')), snap => {
+      catalogo = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderCatalogChips();
+      if (document.getElementById('sec-catalogo').classList.contains('active')) renderCatalogo();
+    });
+
+    // Pedidos
+    onSnapshot(query(collection(db, 'pedidos'), orderBy('criadoEm', 'desc')), snap => {
+      pedidos = snap.docs.map(d => ({ _docId: d.id, ...d.data() }));
+      if (document.getElementById('sec-pedidos').classList.contains('active')) { renderStats(); renderPedidos(); }
+      if (document.getElementById('sec-estoque').classList.contains('active')) renderEstoque();
+    });
+
+    // Oculta loading
+    document.getElementById('loading-overlay').style.display = 'none';
+
+    // Semeia catálogo padrão se vazio
+    const snap = await getDocs(collection(db, 'catalogo'));
+    if (snap.empty) {
+      const defaults = [
+        {nome:'Cabo UTP Cat6', categoria:'Cabos'},
+        {nome:'Conector RJ45', categoria:'Cabos'},
+        {nome:'Switch 8 portas', categoria:'Equipamentos'},
+        {nome:'Patch panel 24p', categoria:'Equipamentos'},
+        {nome:'Roteador WiFi', categoria:'Equipamentos'},
+        {nome:'Organizador de cabos', categoria:'Acessórios'},
+        {nome:'Abraçadeiras', categoria:'Acessórios'},
+        {nome:'Fita isolante', categoria:'Acessórios'},
+      ];
+      for (const m of defaults) await addDoc(collection(db, 'catalogo'), { ...m, criadoEm: serverTimestamp() });
+    }
+  }
+
+  init().catch(e => {
+    document.getElementById('loading-overlay').innerHTML =
+      `<div style="text-align:center;padding:2rem;color:#A32D2D">
+        <i class="ti ti-wifi-off" style="font-size:40px;display:block;margin-bottom:12px"></i>
+        <strong>Erro ao conectar ao Firebase</strong><br>
+        <span style="font-size:13px;color:var(--text-muted)">${e.message}</span>
+      </div>`;
+  });
+
+  renderItems();
+</script>
+</body>
+</html>

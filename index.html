@@ -203,6 +203,29 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
 .toast-green { background: var(--green); color: var(--green-light); }
 .toast-red { background: #A32D2D; color: #FCEBEB; }
 
+/* Qty popover */
+.qty-popover-overlay { position: fixed; inset: 0; z-index: 800; }
+.qty-popover { position: fixed; background: var(--surface); border: 0.5px solid var(--brand-mid); border-radius: var(--radius-lg); box-shadow: 0 6px 28px rgba(4,44,83,0.18); padding: 14px 16px; z-index: 801; min-width: 230px; animation: modal-in .15s ease; }
+.qty-popover-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.qty-popover-name { font-size: 14px; font-weight: 500; color: var(--brand-dark); margin-bottom: 10px; display: flex; align-items: center; gap: 7px; }
+.qty-popover-row { display: flex; gap: 8px; align-items: center; }
+.qty-popover-row input { width: 80px; flex: none; padding: 7px 10px; font-size: 15px; text-align: center; font-weight: 600; }
+.qty-popover-row .btn { flex: 1; justify-content: center; }
+.qty-stepper { display: flex; align-items: center; gap: 0; }
+.qty-stepper button { width: 30px; height: 34px; border: 0.5px solid var(--border-md); background: var(--bg); color: var(--brand-dark); font-size: 16px; cursor: pointer; font-family: var(--font); transition: background .12s; flex-shrink: 0; }
+.qty-stepper button:first-child { border-radius: var(--radius) 0 0 var(--radius); border-right: none; }
+.qty-stepper button:last-child { border-radius: 0 var(--radius) var(--radius) 0; border-left: none; }
+.qty-stepper button:hover { background: var(--brand-light); color: var(--brand); }
+.qty-stepper input { width: 56px; height: 34px; border-radius: 0; border: 0.5px solid var(--border-md); text-align: center; font-size: 15px; font-weight: 600; padding: 0; }
+
+/* Inline qty in items list */
+.qty-inline-ctrl { display: flex; align-items: center; gap: 0; }
+.qty-inline-btn { width: 26px; height: 30px; border: 0.5px solid var(--border-md); background: var(--surface); color: var(--brand-dark); font-size: 15px; cursor: pointer; transition: background .12s; flex-shrink: 0; line-height: 1; }
+.qty-inline-btn:first-child { border-radius: var(--radius) 0 0 var(--radius); border-right: none; }
+.qty-inline-btn:last-child  { border-radius: 0 var(--radius) var(--radius) 0; border-left: none; }
+.qty-inline-btn:hover { background: var(--brand-light); color: var(--brand); }
+.qty-inline-input { width: 48px; height: 30px; border-radius: 0; border: 0.5px solid var(--border-md); text-align: center; font-size: 14px; font-weight: 600; padding: 0; color: var(--brand-dark); }
+
 /* Loading */
 .loading-overlay { position: fixed; inset: 0; background: rgba(237,244,252,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; gap: 14px; }
 .spinner { width: 36px; height: 36px; border: 3px solid var(--border-md); border-top-color: var(--brand); border-radius: 50%; animation: spin .7s linear infinite; }
@@ -252,6 +275,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
     <div class="card">
       <div class="card-title"><i class="ti ti-box" aria-hidden="true"></i> Materiais do pedido</div>
       <label style="margin-bottom:8px;display:block">Clique para adicionar do catálogo</label>
+      <input type="text" id="cat-search-novo" placeholder="🔍  Buscar material no catálogo..." oninput="renderCatalogChips()" style="margin-bottom:10px;font-size:14px" />
       <div class="mat-grid" id="mat-grid"></div>
       <div class="divider">ou adicione manualmente</div>
       <div class="inline-add" style="margin-top:4px">
@@ -284,6 +308,12 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
         <option value="separado">Separado</option>
         <option value="retirado">Retirado</option>
         <option value="cancelado">Cancelado</option>
+      </select>
+      <select id="filtro-data" onchange="renderPedidos()" style="padding:8px 10px;font-size:14px;border-radius:var(--radius);border:0.5px solid var(--border-md);background:var(--surface);color:var(--text)">
+        <option value="">Qualquer data</option>
+        <option value="hoje">Hoje</option>
+        <option value="semana">Essa semana</option>
+        <option value="mes">Esse mês</option>
       </select>
     </div>
     <div class="pedidos-list" id="pedidos-list"></div>
@@ -326,6 +356,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
     </div>
     <div class="card">
       <div class="card-title"><i class="ti ti-list" aria-hidden="true"></i> Materiais cadastrados</div>
+      <input type="text" id="cat-search" placeholder="🔍  Buscar por nome ou categoria..." oninput="renderCatalogo()" style="margin-bottom:12px;font-size:14px" />
       <div id="cat-list"></div>
     </div>
   </div>
@@ -394,6 +425,21 @@ try {
   }
 } catch(e) {}
 
+// Restaura nomes salvos
+try {
+  const savedTecnico = localStorage.getItem('tecnico_nome');
+  if (savedTecnico) document.getElementById('tecnico-nome').value = savedTecnico;
+  const savedEstoque = localStorage.getItem('estoque_nome');
+  if (savedEstoque) document.getElementById('estoque-nome').value = savedEstoque;
+} catch(e) {}
+
+document.getElementById('tecnico-nome').addEventListener('input', function() {
+  try { localStorage.setItem('tecnico_nome', this.value); } catch(e) {}
+});
+document.getElementById('estoque-nome').addEventListener('input', function() {
+  try { localStorage.setItem('estoque_nome', this.value); } catch(e) {}
+});
+
 const subs = { novo:'Técnico — novo pedido', pedidos:'Todos os pedidos', estoque:'Kanban do estoque', catalogo:'Catálogo de materiais' };
 
 window.showSection = function(s) {
@@ -423,19 +469,104 @@ function badgeFor(s) {
 
 /* ─── Catálogo ─────────────────────────────────── */
 function renderCatalogChips() {
-  document.getElementById('mat-grid').innerHTML = catalogo.map(m =>
-    `<button class="mat-chip" onclick="addItemFromCat('${m.id}')">
+  const searchEl = document.getElementById('cat-search-novo');
+  const q = searchEl ? searchEl.value.toLowerCase().trim() : '';
+  const filtered = q ? catalogo.filter(m => m.nome.toLowerCase().includes(q) || (m.categoria||'').toLowerCase().includes(q)) : catalogo;
+  document.getElementById('mat-grid').innerHTML = filtered.map(m =>
+    `<button class="mat-chip" onclick="addItemFromCat('${m.id}', this)">
       <i class="ti ti-package" aria-hidden="true" style="font-size:13px;opacity:.5"></i>${m.nome}
     </button>`
-  ).join('') || `<span style="font-size:13px;color:var(--text-muted)">Catálogo vazio. Adicione materiais na aba Catálogo.</span>`;
+  ).join('') || (q
+    ? `<span style="font-size:13px;color:var(--text-muted)">Nenhum material encontrado para "<strong>${q}</strong>".</span>`
+    : `<span style="font-size:13px;color:var(--text-muted)">Catálogo vazio. Adicione materiais na aba Catálogo.</span>`);
 }
 
-window.addItemFromCat = function(id) {
+window.addItemFromCat = function(id, btnEl) {
   const m = catalogo.find(x => x.id===id);
   if (!m) return;
-  const ex = itensPedido.find(x => x.nome===m.nome);
-  if (ex) ex.qty++; else itensPedido.push({ nome:m.nome, qty:1 });
+
+  // Remove qualquer popover aberto
+  closeQtyPopover();
+
+  // Cria overlay de fundo
+  const overlay = document.createElement('div');
+  overlay.className = 'qty-popover-overlay';
+  overlay.id = 'qty-popover-overlay';
+  overlay.onclick = closeQtyPopover;
+  document.body.appendChild(overlay);
+
+  // Cria popover
+  const pop = document.createElement('div');
+  pop.className = 'qty-popover';
+  pop.id = 'qty-popover';
+  pop.innerHTML = `
+    <div class="qty-popover-title"><i class="ti ti-package" style="font-size:12px;opacity:.5"></i> Quantidade</div>
+    <div class="qty-popover-name"><i class="ti ti-package" style="font-size:14px;opacity:.4;color:var(--brand)"></i>${m.nome}</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div class="qty-stepper">
+        <button onclick="stepQty(-1)" tabindex="-1">−</button>
+        <input type="number" id="popover-qty" value="1" min="1" max="9999"
+          onkeydown="if(event.key==='Enter'){confirmQtyPopover();}"
+          style="border-left:0.5px solid var(--border-md);border-right:0.5px solid var(--border-md);border-top:0.5px solid var(--border-md);border-bottom:0.5px solid var(--border-md)" />
+        <button onclick="stepQty(1)" tabindex="-1">+</button>
+      </div>
+      <button class="btn btn-primary" style="flex:1;justify-content:center;padding:7px 12px" onclick="confirmQtyPopover()">
+        <i class="ti ti-plus"></i> Adicionar
+      </button>
+    </div>
+  `;
+  document.body.appendChild(pop);
+
+  // Posiciona o popover abaixo do botão clicado
+  if (btnEl) {
+    const r = btnEl.getBoundingClientRect();
+    const popW = 250;
+    let left = r.left;
+    if (left + popW > window.innerWidth - 12) left = window.innerWidth - popW - 12;
+    let top = r.bottom + 6;
+    if (top + 130 > window.innerHeight) top = r.top - 134;
+    pop.style.left = left + 'px';
+    pop.style.top = top + 'px';
+  } else {
+    pop.style.left = '50%';
+    pop.style.top = '50%';
+    pop.style.transform = 'translate(-50%,-50%)';
+  }
+
+  // Guarda referência ao item
+  pop._itemNome = m.nome;
+
+  // Foca e seleciona o input
+  setTimeout(() => {
+    const inp = document.getElementById('popover-qty');
+    if (inp) { inp.focus(); inp.select(); }
+  }, 50);
+};
+
+window.stepQty = function(delta) {
+  const inp = document.getElementById('popover-qty');
+  if (!inp) return;
+  const v = Math.max(1, (parseInt(inp.value)||1) + delta);
+  inp.value = v;
+};
+
+window.confirmQtyPopover = function() {
+  const pop = document.getElementById('qty-popover');
+  if (!pop) return;
+  const nome = pop._itemNome;
+  const qty = Math.max(1, parseInt(document.getElementById('popover-qty').value)||1);
+  const ex = itensPedido.find(x => x.nome===nome);
+  if (ex) ex.qty += qty; else itensPedido.push({ nome, qty });
+  closeQtyPopover();
   renderItems();
+  toast(`${nome} adicionado (×${qty})`, 'green');
+};
+
+window.closeQtyPopover = function() {
+  const ov = document.getElementById('qty-popover-overlay');
+  const pop = document.getElementById('qty-popover');
+  if (ov) ov.remove();
+  if (pop) pop.remove();
 };
 
 window.addItemManual = function() {
@@ -459,11 +590,30 @@ function renderItems() {
   list.innerHTML = itensPedido.map((it,i) =>
     `<div class="item-row">
       <span class="item-name"><i class="ti ti-package" aria-hidden="true" style="font-size:13px;opacity:.4;margin-right:6px"></i>${it.nome}</span>
-      <span class="item-qty">${it.qty} un.</span>
+      <div class="qty-inline-ctrl">
+        <button class="qty-inline-btn" onclick="changeItemQty(${i},-1)" title="Diminuir">−</button>
+        <input class="qty-inline-input" type="number" value="${it.qty}" min="1" max="9999"
+          onchange="setItemQty(${i},this.value)"
+          onkeydown="if(event.key==='Enter')this.blur()"
+          title="Editar quantidade" />
+        <button class="qty-inline-btn" onclick="changeItemQty(${i},1)" title="Aumentar">+</button>
+      </div>
+      <span style="font-size:12px;color:var(--text-muted);min-width:20px">un.</span>
       <button class="rm-btn" onclick="removeItem(${i})" title="Remover"><i class="ti ti-x" aria-hidden="true"></i></button>
     </div>`
   ).join('');
 }
+
+window.changeItemQty = function(i, delta) {
+  itensPedido[i].qty = Math.max(1, (itensPedido[i].qty || 1) + delta);
+  renderItems();
+};
+
+window.setItemQty = function(i, val) {
+  const q = Math.max(1, parseInt(val) || 1);
+  itensPedido[i].qty = q;
+  renderItems();
+};
 
 window.removeItem = function(i) { itensPedido.splice(i,1); renderItems(); };
 
@@ -479,20 +629,25 @@ window.addCatalogo = async function() {
   } catch(e) { toast('Erro: '+e.message,'red'); }
 };
 
-window.removeCatalogo = async function(id) {
+window.removeCatalogo = async function(id, nome) {
+  if (!confirm(`Remover "${nome}" do catálogo?\n\nEsta ação não pode ser desfeita.`)) return;
   try { await deleteDoc(doc(db,'catalogo',id)); toast('Material removido.','blue'); }
   catch(e) { toast('Erro ao remover.','red'); }
 };
 
 function renderCatalogo() {
   const el = document.getElementById('cat-list');
+  const searchEl = document.getElementById('cat-search');
+  const q = searchEl ? searchEl.value.toLowerCase().trim() : '';
+  const filtered = q ? catalogo.filter(m => m.nome.toLowerCase().includes(q) || (m.categoria||'').toLowerCase().includes(q)) : catalogo;
   if (!catalogo.length) { el.innerHTML=`<div class="empty"><i class="ti ti-box" aria-hidden="true"></i>Nenhum material cadastrado.</div>`; return; }
-  el.innerHTML = catalogo.map(m =>
+  if (!filtered.length) { el.innerHTML=`<div class="empty"><i class="ti ti-search" aria-hidden="true"></i>Nenhum material encontrado para "<strong>${q}</strong>".</div>`; return; }
+  el.innerHTML = filtered.map(m =>
     `<div class="cat-row">
       <i class="ti ti-package" aria-hidden="true" style="font-size:15px;opacity:.4;color:var(--brand)"></i>
       <span style="flex:1;font-size:14px;color:var(--text)">${m.nome}</span>
       <span style="font-size:12px;color:var(--text-muted);margin-right:10px;background:var(--brand-light);padding:2px 8px;border-radius:99px;color:var(--brand-dark)">${m.categoria}</span>
-      <button class="rm-btn" onclick="removeCatalogo('${m.id}')" title="Remover"><i class="ti ti-x" aria-hidden="true"></i></button>
+      <button class="rm-btn" onclick="removeCatalogo('${m.id}', ${JSON.stringify(m.nome)})" title="Remover"><i class="ti ti-x" aria-hidden="true"></i></button>
     </div>`
   ).join('');
 }
@@ -503,7 +658,7 @@ window.enviarPedido = async function() {
   if (!nome) { toast('Informe seu nome antes de enviar.','red'); return; }
   if (!itensPedido.length) { toast('Adicione ao menos um material.','red'); return; }
   const obs = document.getElementById('obs').value.trim();
-  const id = 'PD'+String(pedidos.length+1).padStart(4,'0');
+  const id = 'PD' + Date.now().toString(36).toUpperCase().slice(-6);
   try {
     await addDoc(collection(db,'pedidos'), {
       id, tecnico:nome, itens:[...itensPedido], obs,
@@ -536,7 +691,33 @@ function renderStats() {
 function renderPedidos() {
   const ft = document.getElementById('filtro-tecnico').value.toLowerCase();
   const fs = document.getElementById('filtro-status').value;
-  const lista = pedidos.filter(p=>(!ft||p.tecnico.toLowerCase().includes(ft))&&(!fs||p.status===fs));
+  const fd = document.getElementById('filtro-data').value;
+
+  const now = new Date();
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfWeek = new Date(startOfDay); startOfWeek.setDate(startOfDay.getDate() - startOfDay.getDay());
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  function parsePtBR(str) {
+    if (!str) return null;
+    // "dd/mm/yyyy, HH:MM:SS" or "dd/mm/yyyy HH:MM:SS"
+    const m = str.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    if (!m) return null;
+    return new Date(+m[3], +m[2]-1, +m[1]);
+  }
+
+  const lista = pedidos.filter(p => {
+    if (ft && !p.tecnico.toLowerCase().includes(ft)) return false;
+    if (fs && p.status !== fs) return false;
+    if (fd) {
+      const d = parsePtBR(p.data);
+      if (!d) return false;
+      if (fd === 'hoje' && d < startOfDay) return false;
+      if (fd === 'semana' && d < startOfWeek) return false;
+      if (fd === 'mes' && d < startOfMonth) return false;
+    }
+    return true;
+  });
   const el = document.getElementById('pedidos-list');
   if (!lista.length) { el.innerHTML=`<div class="empty"><i class="ti ti-inbox" aria-hidden="true"></i>Nenhum pedido encontrado.</div>`; return; }
   el.innerHTML = lista.map(p => {

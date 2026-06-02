@@ -143,7 +143,8 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
 .col-retirado .kanban-col-title { color: #27500A; }
 .col-retirado .col-count { background: #EAF3DE; color: #27500A; }
 .kanban-col-body { padding: .75rem; display: flex; flex-direction: column; gap: 8px; min-height: 120px; }
-.kanban-card { background: var(--bg); border: 0.5px solid var(--border-md); border-radius: var(--radius); padding: .75rem; }
+.kanban-card { background: var(--bg); border: 0.5px solid var(--border-md); border-radius: var(--radius); padding: .75rem; transition: box-shadow .15s, border-color .15s; }
+.kanban-card:hover { box-shadow: 0 3px 14px rgba(24,95,165,0.13); border-color: var(--brand-mid); }
 .kanban-card-id { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); margin-bottom: 3px; }
 .kanban-card-tecnico { font-size: 14px; font-weight: 500; color: var(--brand-dark); margin-bottom: 6px; }
 .kanban-card-mats { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
@@ -155,6 +156,31 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
 .kanban-sep-by strong { color: var(--brand-dark); }
 .kanban-empty { text-align: center; padding: 1.5rem .5rem; color: var(--text-muted); font-size: 13px; }
 .kanban-empty i { font-size: 28px; display: block; margin-bottom: 6px; opacity: .3; }
+.kanban-delete-btn { background: none; border: 0.5px solid var(--border-md); cursor: pointer; color: var(--text-muted); font-size: 12px; padding: 4px 8px; border-radius: var(--radius); display: inline-flex; align-items: center; gap: 4px; transition: all .15s; margin-top: 6px; }
+.kanban-delete-btn:hover { background: var(--red-bg); color: var(--red-text); border-color: var(--red-text); }
+.kanban-date-sep { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: #27500A; background: #EAF3DE; border-radius: var(--radius); padding: 5px 10px; margin-bottom: 2px; display: flex; align-items: center; gap: 6px; border: 0.5px solid #c3dfa0; }
+.kanban-date-sep i { opacity: .6; }
+
+/* Modal pedido */
+.modal-overlay { position: fixed; inset: 0; background: rgba(4,44,83,0.45); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 1rem; backdrop-filter: blur(2px); }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--surface); border-radius: var(--radius-lg); border: 0.5px solid var(--border-md); box-shadow: 0 8px 40px rgba(4,44,83,0.22); width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; animation: modal-in .18s ease; }
+@keyframes modal-in { from { opacity:0; transform:translateY(12px) scale(.97); } to { opacity:1; transform:none; } }
+.modal-header { display: flex; align-items: flex-start; justify-content: space-between; padding: 1.1rem 1.25rem .9rem; border-bottom: 0.5px solid var(--border); }
+.modal-id { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); margin-bottom: 3px; }
+.modal-tecnico { font-size: 18px; font-weight: 600; color: var(--brand-dark); }
+.modal-close { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 20px; padding: 2px; line-height: 1; transition: color .15s; }
+.modal-close:hover { color: var(--red-text); }
+.modal-body { padding: 1.1rem 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+.modal-section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
+.modal-mats { display: flex; flex-direction: column; gap: 5px; }
+.modal-mat-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 11px; background: var(--bg); border-radius: var(--radius); border: 0.5px solid var(--border); }
+.modal-mat-name { font-size: 13px; color: var(--text); display: flex; align-items: center; gap: 7px; }
+.modal-mat-qty { font-size: 13px; font-weight: 600; color: var(--brand-dark); background: var(--brand-light); padding: 2px 9px; border-radius: 99px; }
+.modal-info-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted); }
+.modal-info-row strong { color: var(--brand-dark); }
+.modal-obs { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 9px 12px; font-size: 13px; color: var(--text-muted); font-style: italic; }
+.modal-footer { padding: .9rem 1.25rem 1.1rem; border-top: 0.5px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
 
 /* Estoque header */
 .estoque-banner { background: var(--brand); border-radius: var(--radius-lg); padding: .9rem 1.25rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 12px; }
@@ -305,6 +331,35 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
   </div>
 </div>
 
+<!-- MODAL PEDIDO -->
+<div class="modal-overlay" id="modal-overlay" onclick="fecharModal(event)">
+  <div class="modal" id="modal-pedido">
+    <div class="modal-header">
+      <div>
+        <div class="modal-id" id="modal-id"></div>
+        <div class="modal-tecnico" id="modal-tecnico"></div>
+        <div style="margin-top:6px" id="modal-badge"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="modal-body">
+      <div>
+        <div class="modal-section-label"><i class="ti ti-package" aria-hidden="true"></i> Materiais solicitados</div>
+        <div class="modal-mats" id="modal-mats"></div>
+      </div>
+      <div id="modal-obs-wrap" style="display:none">
+        <div class="modal-section-label"><i class="ti ti-notes" aria-hidden="true"></i> Observação</div>
+        <div class="modal-obs" id="modal-obs"></div>
+      </div>
+      <div>
+        <div class="modal-section-label"><i class="ti ti-info-circle" aria-hidden="true"></i> Informações</div>
+        <div style="display:flex;flex-direction:column;gap:6px" id="modal-infos"></div>
+      </div>
+    </div>
+    <div class="modal-footer" id="modal-footer"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"><i class="ti ti-check" aria-hidden="true"></i> <span id="toast-msg"></span></div>
 
 <script type="module">
@@ -329,6 +384,15 @@ const db = getFirestore(app);
 let pedidos = [];
 let catalogo = [];
 let itensPedido = [];
+
+// Carrega catálogo do cache local imediatamente (evita reset no F5)
+try {
+  const cached = localStorage.getItem('catalogo_cache');
+  if (cached) {
+    catalogo = JSON.parse(cached);
+    renderCatalogChips();
+  }
+} catch(e) {}
 
 const subs = { novo:'Técnico — novo pedido', pedidos:'Todos os pedidos', estoque:'Kanban do estoque', catalogo:'Catálogo de materiais' };
 
@@ -525,6 +589,62 @@ window.cancelarPedido = async function(docId) {
   } catch(e) { toast('Erro: '+e.message,'red'); }
 };
 
+window.deletarRetirado = async function(docId) {
+  if (!confirm('Tem certeza que deseja apagar este pedido retirado? Esta ação não pode ser desfeita.')) return;
+  try {
+    await deleteDoc(doc(db,'pedidos',docId));
+    toast('Pedido removido do histórico.','red');
+  } catch(e) { toast('Erro: '+e.message,'red'); }
+};
+
+window.abrirModal = function(docId) {
+  const p = pedidos.find(x => x._docId === docId);
+  if (!p) return;
+  document.getElementById('modal-id').textContent = p.id;
+  document.getElementById('modal-tecnico').textContent = p.tecnico;
+  document.getElementById('modal-badge').innerHTML = badgeFor(p.status);
+  // Materiais — todos, sem limite
+  document.getElementById('modal-mats').innerHTML = p.itens.map(it =>
+    `<div class="modal-mat-row">
+      <span class="modal-mat-name"><i class="ti ti-package" aria-hidden="true" style="opacity:.4;font-size:13px"></i>${it.nome}</span>
+      <span class="modal-mat-qty">${it.qty} un.</span>
+    </div>`
+  ).join('');
+  // Observação
+  if (p.obs) {
+    document.getElementById('modal-obs').textContent = p.obs;
+    document.getElementById('modal-obs-wrap').style.display = 'block';
+  } else {
+    document.getElementById('modal-obs-wrap').style.display = 'none';
+  }
+  // Informações
+  let infos = `<div class="modal-info-row"><i class="ti ti-calendar" aria-hidden="true"></i> Pedido em <strong>${p.data}</strong></div>`;
+  if (p.separadoPor) infos += `<div class="modal-info-row"><i class="ti ti-user" aria-hidden="true"></i> Separado por <strong>${p.separadoPor}</strong></div>`;
+  if (p.retiradoPor)  infos += `<div class="modal-info-row"><i class="ti ti-package-export" aria-hidden="true"></i> Retirado por <strong>${p.retiradoPor}</strong> em <strong>${p.dataRetirada}</strong></div>`;
+  document.getElementById('modal-infos').innerHTML = infos;
+  // Botões no footer
+  let footer = '';
+  const nome = document.getElementById('estoque-nome').value.trim();
+  if (p.status === 'pendente') {
+    footer = `<button class="btn btn-primary btn-sm" onclick="marcarSeparado('${p._docId}');closeModal()"><i class="ti ti-check" aria-hidden="true"></i> Separar</button>
+              <button class="btn btn-sm" style="background:var(--red-bg);color:var(--red-text);border:none" onclick="cancelarPedido('${p._docId}');closeModal()"><i class="ti ti-x" aria-hidden="true"></i> Cancelar</button>`;
+  } else if (p.status === 'separado') {
+    footer = `<button class="btn btn-success btn-sm" onclick="confirmarRetirada('${p._docId}');closeModal()"><i class="ti ti-package-export" aria-hidden="true"></i> Confirmar retirada</button>`;
+  } else if (p.status === 'retirado') {
+    footer = `<button class="kanban-delete-btn" style="margin:0" onclick="deletarRetirado('${p._docId}');closeModal()"><i class="ti ti-trash" aria-hidden="true"></i> Apagar do histórico</button>`;
+  }
+  document.getElementById('modal-footer').innerHTML = footer || `<button class="btn btn-sm" style="background:var(--bg);color:var(--text-muted);border:0.5px solid var(--border-md)" onclick="closeModal()">Fechar</button>`;
+  document.getElementById('modal-overlay').classList.add('open');
+};
+
+window.closeModal = function() {
+  document.getElementById('modal-overlay').classList.remove('open');
+};
+
+window.fecharModal = function(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+};
+
 function kanbanCard(p) {
   const mats = p.itens.slice(0,3).map(it=>`<span class="kanban-mat">${it.nome} ×${it.qty}</span>`).join('');
   const mais = p.itens.length>3 ? `<span class="kanban-mat">+${p.itens.length-3} mais</span>` : '';
@@ -539,14 +659,16 @@ function kanbanCard(p) {
   }
   const sepInfo = p.separadoPor ? `<div class="kanban-sep-by"><i class="ti ti-user" aria-hidden="true" style="font-size:11px;margin-right:3px"></i>Separado por <strong>${p.separadoPor}</strong></div>` : '';
   const retInfo = p.retiradoPor ? `<div class="kanban-sep-by"><i class="ti ti-package-export" aria-hidden="true" style="font-size:11px;margin-right:3px"></i>Retirado por <strong>${p.retiradoPor}</strong></div>` : '';
-  return `<div class="kanban-card">
+  const deleteBtn = p.status==='retirado' ? `<button class="kanban-delete-btn" onclick="event.stopPropagation();deletarRetirado('${p._docId}')"><i class="ti ti-trash" aria-hidden="true"></i> Apagar</button>` : '';
+  return `<div class="kanban-card" onclick="abrirModal('${p._docId}')" style="cursor:pointer" title="Ver detalhes completos">
     <div class="kanban-card-id">${p.id}</div>
     <div class="kanban-card-tecnico"><i class="ti ti-user" aria-hidden="true" style="font-size:13px;opacity:.5;margin-right:4px"></i>${p.tecnico}</div>
     <div class="kanban-card-mats">${mats}${mais}</div>
     ${p.obs?`<div style="font-size:11px;color:var(--text-muted);font-style:italic;margin-bottom:6px">${p.obs}</div>`:''}
     <div class="kanban-card-data"><i class="ti ti-clock" aria-hidden="true" style="font-size:11px;margin-right:3px"></i>${p.data}</div>
     ${sepInfo}${retInfo}
-    ${actions?`<div class="kanban-card-actions">${actions}</div>`:''}
+    ${actions?`<div class="kanban-card-actions" onclick="event.stopPropagation()">${actions}</div>`:''}
+    ${deleteBtn}
   </div>`;
 }
 
@@ -558,9 +680,31 @@ function renderKanban() {
   ];
   document.getElementById('kanban-board').innerHTML = cols.map(col => {
     const items = pedidos.filter(p=>p.status===col.key);
-    const cards = items.length
-      ? items.map(kanbanCard).join('')
-      : `<div class="kanban-empty"><i class="ti ${col.icon}" aria-hidden="true"></i>Nenhum pedido</div>`;
+    let cards = '';
+    if (!items.length) {
+      cards = `<div class="kanban-empty"><i class="ti ${col.icon}" aria-hidden="true"></i>Nenhum pedido</div>`;
+    } else if (col.key === 'retirado') {
+      // Agrupa por data de retirada (extrai só a data, sem hora)
+      const grupos = {};
+      items.forEach(p => {
+        const dataKey = p.dataRetirada ? p.dataRetirada.split(' ')[0] : p.data ? p.data.split(' ')[0] : 'Sem data';
+        if (!grupos[dataKey]) grupos[dataKey] = [];
+        grupos[dataKey].push(p);
+      });
+      // Ordena as datas (mais recente primeiro)
+      const datasOrdenadas = Object.keys(grupos).sort((a, b) => {
+        const parse = s => { const [d,m,y] = s.split('/'); return new Date(+y,+m-1,+d); };
+        return parse(b) - parse(a);
+      });
+      cards = datasOrdenadas.map(data => {
+        const isToday = data === new Date().toLocaleDateString('pt-BR');
+        const label = isToday ? `Hoje — ${data}` : data;
+        return `<div class="kanban-date-sep"><i class="ti ti-calendar" aria-hidden="true"></i>${label} <span style="opacity:.5;font-weight:400">(${grupos[data].length})</span></div>` +
+          grupos[data].map(kanbanCard).join('');
+      }).join('');
+    } else {
+      cards = items.map(kanbanCard).join('');
+    }
     return `<div class="kanban-col col-${col.key}">
       <div class="kanban-col-header">
         <div class="kanban-col-title"><i class="ti ${col.icon}" aria-hidden="true"></i>${col.label}</div>
@@ -575,6 +719,8 @@ function renderKanban() {
 async function init() {
   onSnapshot(query(collection(db,'catalogo'), orderBy('criadoEm','asc')), snap => {
     catalogo = snap.docs.map(d=>({id:d.id,...d.data()}));
+    // Persiste catálogo no localStorage para não perder no F5
+    try { localStorage.setItem('catalogo_cache', JSON.stringify(catalogo)); } catch(e){}
     renderCatalogChips();
     if (document.getElementById('sec-catalogo').classList.contains('active')) renderCatalogo();
   });

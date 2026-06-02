@@ -356,11 +356,26 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
   <!-- ESTOQUE KANBAN -->
   <div class="section" id="sec-estoque">
     <div class="estoque-banner">
+      <div class="card">
+  <div class="card-title">
+    Login do Estoque
+  </div>
+
+  <button
+    class="btn btn-primary"
+    onclick="loginGoogle()">
+
+    <i class="ti ti-brand-google"></i>
+    Entrar com Google
+
+  </button>
+</div>
       <div class="estoque-banner-icon"><i class="ti ti-layout-kanban" aria-hidden="true"></i></div>
       <div class="estoque-banner-text">
         <div class="title">Área do funcionário de estoque</div>
         <div class="sub">Arraste os pedidos pelas colunas ou use os botões para atualizar o status</div>
       </div>
+      
       <span class="estoque-badge">ESTOQUE</span>
     </div>
     <div class="card" style="margin-bottom:1rem">
@@ -433,6 +448,14 @@ import {
   getFirestore, collection, doc, addDoc, updateDoc, deleteDoc,
   onSnapshot, query, orderBy, serverTimestamp, getDocs
 } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+  import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged
+}
+from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBCF3WLMNxbsUih3Gg9V2EQVWvo7Rr2Ers",
@@ -445,6 +468,11 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
+  const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+let usuarioLogado = null;
 
 let pedidos = [];
 let catalogo = [];
@@ -485,7 +513,20 @@ window.showSection = function(s) {
   if (s==='pedidos') { renderStats(); renderPedidos(); }
   if (s==='catalogo') renderCatalogo();
   if (s==='novo') renderCatalogChips();
-  if (s==='estoque') renderKanban();
+ if (s === 'estoque') {
+
+  if (!usuarioLogado) {
+
+    toast(
+      "Faça login com Google",
+      "red"
+    );
+
+    return;
+  }
+
+  renderKanban();
+}
 };
 
 function toast(msg, tipo) {
@@ -931,7 +972,72 @@ function renderKanban() {
 }
 
 /* ─── Firebase listeners ───────────────────────── */
-async function init() {
+  window.loginGoogle = async function() {
+
+  try {
+
+    const result =
+      await signInWithPopup(auth, provider);
+
+    const user = result.user;
+
+    if (
+      !user.email.endsWith(
+        "@viuinternet.com.br"
+      )
+    ) {
+
+      await signOut(auth);
+
+      toast(
+        "Use seu e-mail corporativo",
+        "red"
+      );
+
+      return;
+    }
+
+    toast(
+      "Bem-vindo " + user.displayName,
+      "green"
+    );
+
+  } catch(e) {
+
+    toast(
+      "Erro: " + e.message,
+      "red"
+    );
+
+  }
+
+}
+  async function onAuthStateChanged(auth, (user) => {
+
+  if(user){
+
+    usuarioLogado = user;
+
+    const campo =
+      document.getElementById(
+        "estoque-nome"
+      );
+
+    if(campo){
+
+      campo.value =
+        user.displayName;
+
+    }
+
+  }else{
+
+    usuarioLogado = null;
+
+  }
+
+});
+  init() {
   onSnapshot(query(collection(db,'catalogo'), orderBy('criadoEm','asc')), snap => {
     catalogo = snap.docs.map(d=>({id:d.id,...d.data()}));
     // Persiste catálogo no localStorage para não perder no F5
@@ -970,6 +1076,7 @@ init().catch(e => {
 });
 
 renderItems();
+  
 </script>
   <footer class="dev-footer">
     <i class="ti ti-code"></i>

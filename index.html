@@ -287,6 +287,29 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
     font-size: 12px;
     color: #B5D4F4;
 }
+/* ── Dashboard ──────────────────────────────────── */
+.dash-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem; flex-wrap:wrap; gap:12px; }
+.dash-period-btns { display:flex; gap:4px; }
+.dash-period-btn { padding:6px 14px; border-radius:var(--radius); border:0.5px solid var(--border-md); background:transparent; font-size:13px; color:var(--text-muted); cursor:pointer; font-family:var(--font); transition:all .15s; }
+.dash-period-btn.active, .dash-period-btn:hover { background:var(--brand); color:#fff; border-color:var(--brand); }
+.dash-kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:1.25rem; }
+.dash-kpi { background:var(--surface); border:0.5px solid var(--border-md); border-radius:var(--radius-lg); padding:1rem 1.1rem; display:flex; align-items:center; gap:14px; }
+.dash-kpi-icon { width:42px; height:42px; border-radius:var(--radius); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+.dash-kpi-val { font-size:26px; font-weight:700; color:var(--brand-dark); line-height:1; }
+.dash-kpi-lbl { font-size:11px; color:var(--text-muted); margin-top:3px; text-transform:uppercase; letter-spacing:.04em; }
+.dash-kpi-delta { font-size:11px; margin-top:4px; font-weight:500; }
+.dash-row-2 { display:flex; gap:14px; margin-bottom:1rem; flex-wrap:wrap; }
+.dash-bar-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+.dash-bar-label { font-size:13px; color:var(--text); min-width:130px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dash-bar-track { flex:1; height:10px; background:var(--bg); border-radius:99px; overflow:hidden; }
+.dash-bar-fill { height:100%; border-radius:99px; background:var(--brand); transition:width .5s ease; }
+.dash-bar-count { font-size:12px; color:var(--text-muted); min-width:28px; text-align:right; font-weight:500; }
+.dash-legend-row { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text); }
+.dash-legend-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.dash-tempo-card { background:var(--brand-light); border:0.5px solid var(--brand-mid); border-radius:var(--radius-lg); padding:.9rem 1.2rem; text-align:center; min-width:160px; }
+.dash-tempo-val { font-size:28px; font-weight:700; color:var(--brand-dark); }
+.dash-tempo-lbl { font-size:11px; color:var(--text-muted); margin-top:4px; text-transform:uppercase; letter-spacing:.04em; }
+@media(max-width:700px){ .dash-kpis{grid-template-columns:repeat(2,1fr);} .dash-row-2{flex-direction:column;} }
 </style>
 </head>
 <body>
@@ -414,6 +437,49 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
       </div>
     </div>
     <div class="kanban-board" id="kanban-board"></div>
+
+    <!-- Dashboard dentro do Estoque -->
+    <div style="margin-top:1.5rem">
+      <div class="dash-header">
+        <div>
+          <div style="font-size:17px;font-weight:600;color:var(--brand-dark)"><i class="ti ti-chart-bar" style="margin-right:8px"></i>Dashboard</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Visão geral em tempo real dos pedidos</div>
+        </div>
+        <div class="dash-period-btns">
+          <button class="dash-period-btn active" onclick="setDashPeriod('7',this)">7 dias</button>
+          <button class="dash-period-btn" onclick="setDashPeriod('30',this)">30 dias</button>
+          <button class="dash-period-btn" onclick="setDashPeriod('90',this)">90 dias</button>
+          <button class="dash-period-btn" onclick="setDashPeriod('0',this)">Tudo</button>
+        </div>
+      </div>
+      <div class="dash-kpis" id="dash-kpis"></div>
+      <div class="dash-row-2">
+        <div class="card" style="flex:2;min-width:0">
+          <div class="card-title"><i class="ti ti-trending-up"></i> Pedidos por dia</div>
+          <canvas id="chart-linha" height="180"></canvas>
+        </div>
+        <div class="card" style="flex:1;min-width:220px">
+          <div class="card-title"><i class="ti ti-chart-donut"></i> Status atual</div>
+          <canvas id="chart-pizza" height="180"></canvas>
+          <div id="dash-legend" style="margin-top:12px;display:flex;flex-direction:column;gap:6px"></div>
+        </div>
+      </div>
+      <div class="dash-row-2">
+        <div class="card" style="flex:1;min-width:0">
+          <div class="card-title"><i class="ti ti-package"></i> Materiais mais pedidos</div>
+          <div id="dash-top-mats"></div>
+        </div>
+        <div class="card" style="flex:1;min-width:0">
+          <div class="card-title"><i class="ti ti-users"></i> Técnicos mais ativos</div>
+          <div id="dash-top-tecs"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-clock"></i> Tempo médio de atendimento</div>
+        <div id="dash-tempos" style="display:flex;gap:16px;flex-wrap:wrap"></div>
+      </div>
+    </div>
+
     </div><!-- /estoque-content -->
   </div>
 
@@ -440,6 +506,9 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
     </div>
   </div>
 </div>
+
+
+</div><!-- /app-wrapper -->
 
 <!-- MODAL PEDIDO -->
 <div class="modal-overlay" id="modal-overlay" onclick="fecharModal(event)">
@@ -472,6 +541,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
 
 <div class="toast" id="toast"><i class="ti ti-check" aria-hidden="true"></i> <span id="toast-msg"></span></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
 import {
@@ -540,6 +610,7 @@ window.showSection = function(s) {
     if (user) {
       showEstoqueContent(user);
       renderKanban();
+      renderDashboard();
     } else {
       document.getElementById('estoque-auth-wall').style.display = 'flex';
       document.getElementById('estoque-content').style.display = 'none';
@@ -553,6 +624,7 @@ window.loginGoogle = async function() {
     const result = await signInWithPopup(auth, googleProvider);
     showEstoqueContent(result.user);
     renderKanban();
+    renderDashboard();
     toast('Bem-vindo, ' + result.user.displayName + '!', 'green');
   } catch(e) {
     toast('Erro no login: ' + e.message, 'red');
@@ -1048,7 +1120,8 @@ async function init() {
   onSnapshot(query(collection(db,'pedidos'), orderBy('criadoEm','desc')), snap => {
     pedidos = snap.docs.map(d=>({_docId:d.id,...d.data()}));
     if (document.getElementById('sec-pedidos').classList.contains('active')) { renderStats(); renderPedidos(); }
-    if (document.getElementById('sec-estoque').classList.contains('active')) renderKanban();
+    if (document.getElementById('sec-estoque').classList.contains('active')) { renderKanban(); if(auth.currentUser) renderDashboard(); }
+    if (document.getElementById('sec-dashboard').classList.contains('active')) renderDashboard();
   });
 
   document.getElementById('loading-overlay').style.display='none';
@@ -1073,6 +1146,131 @@ init().catch(e => {
       <span style="font-size:13px;color:var(--text-muted)">${e.message}</span>
     </div>`;
 });
+
+/* ─── Dashboard ─────────────────────────────────── */
+let dashPeriod = 7;
+let chartLinha = null;
+let chartPizza = null;
+
+window.setDashPeriod = function(dias, btn) {
+  dashPeriod = parseInt(dias);
+  document.querySelectorAll('.dash-period-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderDashboard();
+};
+
+function filterByPeriod(lista) {
+  if (!dashPeriod) return lista;
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - dashPeriod);
+  return lista.filter(p => {
+    const d = parseDataPedido(p);
+    return d ? d >= cutoff : true;
+  });
+}
+
+function parseDataPedido(p) {
+  if (p.criadoEm && p.criadoEm.toDate) return p.criadoEm.toDate();
+  if (p.data) {
+    const [dt, hr] = p.data.split(' ');
+    const [d,m,y] = dt.split('/');
+    return new Date(`${y}-${m}-${d}T${hr||'00:00'}:00`);
+  }
+  return null;
+}
+
+function renderDashboard() {
+  const lista = filterByPeriod(pedidos);
+  const total = lista.length;
+  const pendentes = lista.filter(p=>p.status==='pendente').length;
+  const separados = lista.filter(p=>p.status==='separado').length;
+  const retirados = lista.filter(p=>p.status==='retirado').length;
+  const cancelados = lista.filter(p=>p.status==='cancelado').length;
+
+  // KPIs
+  const kpiData = [
+    { icon:'ti-clipboard-list', cor:'#E6F1FB', iconCor:'#185FA5', val:total, lbl:'Total de pedidos' },
+    { icon:'ti-clock', cor:'#FAEEDA', iconCor:'#633806', val:pendentes, lbl:'Pendentes' },
+    { icon:'ti-check', cor:'#E6F1FB', iconCor:'#0C447C', val:separados, lbl:'Separados' },
+    { icon:'ti-package-export', cor:'#EAF3DE', iconCor:'#27500A', val:retirados, lbl:'Retirados' },
+  ];
+  document.getElementById('dash-kpis').innerHTML = kpiData.map(k => `
+    <div class="dash-kpi">
+      <div class="dash-kpi-icon" style="background:${k.cor};color:${k.iconCor}"><i class="ti ${k.icon}"></i></div>
+      <div>
+        <div class="dash-kpi-val">${k.val}</div>
+        <div class="dash-kpi-lbl">${k.lbl}</div>
+      </div>
+    </div>`).join('');
+
+  // Gráfico linha — pedidos por dia
+  const numDias = dashPeriod || 30;
+  const diasMap = {};
+  const hoje = new Date();
+  for (let i = numDias - 1; i >= 0; i--) {
+    const d = new Date(hoje); d.setDate(d.getDate() - i);
+    diasMap[d.toLocaleDateString('pt-BR')] = 0;
+  }
+  lista.forEach(p => {
+    const d = parseDataPedido(p); if(!d) return;
+    const key = d.toLocaleDateString('pt-BR');
+    if (key in diasMap) diasMap[key]++;
+  });
+  if (chartLinha) chartLinha.destroy();
+  chartLinha = new Chart(document.getElementById('chart-linha').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: Object.keys(diasMap),
+      datasets: [{ label:'Pedidos', data:Object.values(diasMap), borderColor:'#185FA5', backgroundColor:'rgba(24,95,165,0.10)', tension:0.4, fill:true, pointBackgroundColor:'#185FA5', pointRadius:4 }]
+    },
+    options: { responsive:true, plugins:{legend:{display:false}}, scales:{ x:{ticks:{font:{size:11},maxRotation:45,color:'#5a7fa8'},grid:{color:'rgba(24,95,165,0.07)'}}, y:{beginAtZero:true,ticks:{stepSize:1,color:'#5a7fa8',font:{size:11}},grid:{color:'rgba(24,95,165,0.07)'}} } }
+  });
+
+  // Gráfico pizza
+  if (chartPizza) chartPizza.destroy();
+  const pizzaLabels = ['Pendente','Separado','Retirado','Cancelado'];
+  const pizzaData = [pendentes, separados, retirados, cancelados];
+  const pizzaCores = ['#F5C06A','#5FA8E5','#7BC64E','#E57373'];
+  chartPizza = new Chart(document.getElementById('chart-pizza').getContext('2d'), {
+    type: 'doughnut',
+    data: { labels:pizzaLabels, datasets:[{data:pizzaData, backgroundColor:pizzaCores, borderWidth:2, borderColor:'#fff'}] },
+    options: { responsive:true, cutout:'65%', plugins:{legend:{display:false}} }
+  });
+  document.getElementById('dash-legend').innerHTML = pizzaLabels.map((l,i) =>
+    `<div class="dash-legend-row"><div class="dash-legend-dot" style="background:${pizzaCores[i]}"></div><span>${l}</span><span style="margin-left:auto;font-weight:600;color:var(--brand-dark)">${pizzaData[i]}</span></div>`
+  ).join('');
+
+  // Top materiais
+  const matCount = {};
+  lista.forEach(p => (p.itens||[]).forEach(it => { matCount[it.nome] = (matCount[it.nome]||0) + it.qty; }));
+  const topMats = Object.entries(matCount).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const maxMat = topMats[0]?.[1] || 1;
+  document.getElementById('dash-top-mats').innerHTML = topMats.length
+    ? topMats.map(([nome,qty]) => `<div class="dash-bar-row"><div class="dash-bar-label" title="${nome}">${nome}</div><div class="dash-bar-track"><div class="dash-bar-fill" style="width:${Math.round(qty/maxMat*100)}%"></div></div><div class="dash-bar-count">${qty}</div></div>`).join('')
+    : '<div class="empty" style="padding:1.5rem 0"><i class="ti ti-package" style="font-size:28px;display:block;margin-bottom:8px;opacity:.3"></i>Sem dados</div>';
+
+  // Top técnicos
+  const tecCount = {};
+  lista.forEach(p => { if(p.tecnico) tecCount[p.tecnico]=(tecCount[p.tecnico]||0)+1; });
+  const topTecs = Object.entries(tecCount).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const maxTec = topTecs[0]?.[1] || 1;
+  document.getElementById('dash-top-tecs').innerHTML = topTecs.length
+    ? topTecs.map(([nome,qty]) => `<div class="dash-bar-row"><div class="dash-bar-label" title="${nome}">${nome}</div><div class="dash-bar-track"><div class="dash-bar-fill" style="width:${Math.round(qty/maxTec*100)}%;background:#639922"></div></div><div class="dash-bar-count">${qty}</div></div>`).join('')
+    : '<div class="empty" style="padding:1.5rem 0"><i class="ti ti-users" style="font-size:28px;display:block;margin-bottom:8px;opacity:.3"></i>Sem dados</div>';
+
+  // Tempo médio
+  function fmtMs(ms) { const m=Math.round(ms/60000); if(m<60) return m+'min'; const h=Math.floor(m/60),rm=m%60; return h+'h'+(rm?rm+'min':''); }
+  const temposS = lista.filter(p=>p.separadoEm).map(p=>{ const c=parseDataPedido(p); const s=p.separadoEm?.toDate?.(); return c&&s?s-c:null; }).filter(Boolean);
+  const temposR = lista.filter(p=>p.retiradoEm).map(p=>{ const c=parseDataPedido(p); const r=p.retiradoEm?.toDate?.(); return c&&r?r-c:null; }).filter(Boolean);
+  const mediaS = temposS.length ? temposS.reduce((a,b)=>a+b,0)/temposS.length : null;
+  const mediaR = temposR.length ? temposR.reduce((a,b)=>a+b,0)/temposR.length : null;
+  document.getElementById('dash-tempos').innerHTML = `
+    <div class="dash-tempo-card"><div class="dash-tempo-val">${mediaS?fmtMs(mediaS):'—'}</div><div class="dash-tempo-lbl">Pedido → Separação</div></div>
+    <div class="dash-tempo-card"><div class="dash-tempo-val">${mediaR?fmtMs(mediaR):'—'}</div><div class="dash-tempo-lbl">Pedido → Retirada</div></div>
+    <div class="dash-tempo-card"><div class="dash-tempo-val">${total?Math.round(retirados/total*100)+'%':'—'}</div><div class="dash-tempo-lbl">Taxa de conclusão</div></div>
+    <div class="dash-tempo-card"><div class="dash-tempo-val">${total?Math.round(cancelados/total*100)+'%':'—'}</div><div class="dash-tempo-lbl">Taxa de cancelamento</div></div>
+  `;
+}
 
 renderItems();
 </script>

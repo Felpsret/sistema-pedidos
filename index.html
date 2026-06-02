@@ -237,60 +237,44 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
   .form-row { grid-template-columns: 1fr; }
   .kanban-board { grid-template-columns: 1fr; }
 }
-  /* Desenvolvedor */
-.dev-signature {
-  position: fixed;
-  bottom: 15px;
-  right: 15px;
-  z-index: 9999;
+ /* Rodapé Desenvolvedor */
+.dev-footer{
+    margin-top: 30px;
+    padding: 20px;
+    background: #042C53;
+    color: #fff;
+    border-radius: 12px 12px 0 0;
 
-  display: flex;
-  align-items: center;
-  gap: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
 
-  padding: 10px 14px;
-
-  background: rgba(255,255,255,0.96);
-  backdrop-filter: blur(8px);
-
-  border: 1px solid rgba(24,95,165,0.18);
-  border-radius: 999px;
-
-  box-shadow: 0 4px 18px rgba(4,44,83,0.12);
-
-  font-size: 13px;
-  font-weight: 600;
-  color: #185FA5;
-
-  transition: all .2s ease;
+    text-align: center;
 }
 
-.dev-signature:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(4,44,83,0.18);
+.dev-footer i{
+    font-size: 24px;
+    color: #B5D4F4;
 }
 
-.dev-signature i {
-  font-size: 16px;
+.dev-footer div{
+    display: flex;
+    flex-direction: column;
 }
 
-.dev-signature small {
-  display: block;
-  font-size: 10px;
-  font-weight: 500;
-  color: #5a7fa8;
-  margin-top: 1px;
+.dev-footer strong{
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.dev-footer small{
+    font-size: 12px;
+    color: #B5D4F4;
 }
 </style>
 </head>
 <body>
-<div class="dev-signature">
-  <i class="ti ti-code"></i>
-  <div>
-    Felipe dos Santos Garcia
-    <small>Desenvolvedor do Sistema</small>
-  </div>
-</div>
 <div id="loading-overlay" class="loading-overlay">
   <div class="spinner"></div>
   <div class="loading-txt">Conectando ao Firebase...</div>
@@ -987,5 +971,12 @@ init().catch(e => {
 
 renderItems();
 </script>
+  <footer class="dev-footer">
+    <i class="ti ti-code"></i>
+    <div>
+        <strong>Felipe dos Santos Garcia</strong>
+        <small>Desenvolvedor do Sistema</small>
+    </div>
+</footer>
 </body>
 </html>

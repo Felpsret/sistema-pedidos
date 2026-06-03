@@ -264,6 +264,11 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
 .tecnico-select { width:100%; padding:10px 12px; border:0.5px solid var(--border-md); border-radius:var(--radius); font-size:15px; background:var(--surface); color:var(--text); font-family:var(--font); transition:border-color .15s; appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%235a7fa8' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; background-size:16px; padding-right:36px; }
 .tecnico-select:focus { outline:none; border-color:var(--brand); box-shadow:0 0 0 3px rgba(24,95,165,0.12); }
 .btn-tecnico-entrar { width:100%; padding:12px; font-size:15px; justify-content:center; margin-top:14px; border-radius:var(--radius); }
+.tecnico-login-divider { display:flex; align-items:center; gap:10px; margin:14px 0 0; }
+.tecnico-login-divider::before, .tecnico-login-divider::after { content:''; flex:1; height:0.5px; background:var(--border-md); }
+.tecnico-login-divider span { font-size:12px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em; }
+.btn-estoque-acesso { width:100%; padding:11px; font-size:14px; justify-content:center; margin-top:8px; border-radius:var(--radius); background:var(--brand-darker); color:rgba(255,255,255,.85); border:0.5px solid rgba(255,255,255,.15); font-family:var(--font); cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition:opacity .15s; }
+.btn-estoque-acesso:hover { opacity:.82; }
 
 /* ── Notificação pedido pronto ─────────────────────── */
 .notify-bar { display:none; align-items:center; gap:12px; background:linear-gradient(135deg,#3B6D11,#639922); border-radius:var(--radius-lg); padding:.9rem 1.25rem; margin-bottom:1rem; box-shadow:0 4px 16px rgba(59,109,17,.3); animation:pulse-green 2s ease-in-out infinite; }
@@ -382,6 +387,12 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
           </select>
           <button class="btn btn-primary btn-tecnico-entrar" onclick="confirmarTecnico()">
             <i class="ti ti-login"></i> Entrar como técnico
+          </button>
+          <div class="tecnico-login-divider">
+            <span>ou</span>
+          </div>
+          <button class="btn btn-estoque-acesso" onclick="irParaEstoque()">
+            <i class="ti ti-layout-kanban"></i> Sou do Estoque — ir direto
           </button>
         </div>
       </div>
@@ -864,6 +875,11 @@ window.removerTecnico = async function(id, codigo) {
     await deleteDoc(doc(db,'tecnicos',id));
     toast('Técnico ' + codigo + ' removido.','blue');
   } catch(e) { toast('Erro ao remover.','red'); }
+};
+
+window.irParaEstoque = function() {
+  document.getElementById('tecnico-login-overlay').style.display = 'none';
+  showSection('estoque');
 };
 
 window.confirmarTecnico = function() {

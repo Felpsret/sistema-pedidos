@@ -264,6 +264,28 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
 .tecnico-select { width:100%; padding:10px 12px; border:0.5px solid var(--border-md); border-radius:var(--radius); font-size:15px; background:var(--surface); color:var(--text); font-family:var(--font); transition:border-color .15s; appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%235a7fa8' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; background-size:16px; padding-right:36px; }
 .tecnico-select:focus { outline:none; border-color:var(--brand); box-shadow:0 0 0 3px rgba(24,95,165,0.12); }
 .btn-tecnico-entrar { width:100%; padding:12px; font-size:15px; justify-content:center; margin-top:14px; border-radius:var(--radius); }
+
+/* ── Select com busca (técnico login) ─────────────────── */
+.tec-searchselect { position:relative; width:100%; }
+.tec-searchselect-trigger { display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border:0.5px solid var(--border-md); border-radius:var(--radius); font-size:15px; background:var(--surface); color:var(--text); font-family:var(--font); cursor:pointer; transition:border-color .15s; user-select:none; }
+.tec-searchselect-trigger:hover, .tec-searchselect.open .tec-searchselect-trigger { border-color:var(--brand); box-shadow:0 0 0 3px rgba(24,95,165,0.12); }
+#tec-trigger-label { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#tec-trigger-label.placeholder { color:var(--text-muted); }
+#tec-chevron { transition:transform .2s; font-size:14px; color:var(--text-muted); flex-shrink:0; margin-left:8px; }
+.tec-searchselect.open #tec-chevron { transform:rotate(180deg); }
+.tec-searchselect-dropdown { display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--surface); border:0.5px solid var(--brand-mid); border-radius:var(--radius); box-shadow:0 8px 28px rgba(4,44,83,0.18); z-index:3000; overflow:hidden; animation:modal-in .14s ease; }
+.tec-searchselect.open .tec-searchselect-dropdown { display:block; }
+.tec-search-wrap { display:flex; align-items:center; gap:8px; padding:10px 12px; border-bottom:0.5px solid var(--border); background:var(--bg); }
+.tec-search-icon { font-size:15px; color:var(--text-muted); flex-shrink:0; }
+.tec-search-input { flex:1; border:none; background:transparent; font-size:14px; color:var(--text); font-family:var(--font); outline:none; }
+.tec-search-input::placeholder { color:var(--text-muted); }
+.tec-options-list { max-height:220px; overflow-y:auto; }
+.tec-option { padding:10px 14px; font-size:14px; color:var(--text); cursor:pointer; display:flex; align-items:center; gap:8px; transition:background .1s; }
+.tec-option:hover, .tec-option.focused { background:var(--brand-light); color:var(--brand-dark); }
+.tec-option.selected { background:var(--brand); color:#fff; font-weight:500; }
+.tec-option i { font-size:13px; opacity:.6; }
+.tec-option-highlight { background:rgba(24,95,165,.18); border-radius:2px; }
+.tec-no-results { padding:14px; text-align:center; font-size:13px; color:var(--text-muted); }
 .tecnico-login-divider { display:flex; align-items:center; gap:10px; margin:14px 0 0; }
 .tecnico-login-divider::before, .tecnico-login-divider::after { content:''; flex:1; height:0.5px; background:var(--border-md); }
 .tecnico-login-divider span { font-size:12px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em; }
@@ -382,9 +404,23 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
         </div>
         <div class="tecnico-login-body">
           <label>Quem é você?</label>
-          <select class="tecnico-select" id="tecnico-select">
-            <option value="">— Selecione seu código —</option>
-          </select>
+          <div class="tec-searchselect" id="tec-searchselect">
+            <div class="tec-searchselect-trigger" id="tec-trigger" onclick="toggleTecDropdown()">
+              <span id="tec-trigger-label">— Selecione seu código —</span>
+              <i class="ti ti-chevron-down" id="tec-chevron"></i>
+            </div>
+            <div class="tec-searchselect-dropdown" id="tec-dropdown">
+              <div class="tec-search-wrap">
+                <i class="ti ti-search tec-search-icon"></i>
+                <input type="text" class="tec-search-input" id="tec-search-input"
+                  placeholder="Buscar por nome ou código…"
+                  oninput="filtrarTecnicos(this.value)"
+                  onclick="event.stopPropagation()" />
+              </div>
+              <div class="tec-options-list" id="tec-options-list"></div>
+            </div>
+          </div>
+          <select id="tecnico-select" style="display:none"></select>
           <button class="btn btn-primary btn-tecnico-entrar" onclick="confirmarTecnico()">
             <i class="ti ti-login"></i> Entrar como técnico
           </button>
@@ -835,9 +871,14 @@ let tecnicoLogado = null; // string codigo
 
 function renderTecSelect() {
   const sel = document.getElementById('tecnico-select');
-  if (!sel) return;
-  sel.innerHTML = '<option value="">— Selecione seu código —</option>' +
-    tecnicos.map(t => `<option value="${t.codigo}">${t.codigo}</option>`).join('');
+  if (sel) {
+    sel.innerHTML = '<option value="">— Selecione seu código —</option>' +
+      tecnicos.map(t => `<option value="${t.codigo}">${t.codigo}</option>`).join('');
+  }
+  // Inicializa label do trigger
+  const lbl = document.getElementById('tec-trigger-label');
+  if (lbl && !tecSelecionado) { lbl.textContent = '— Selecione seu código —'; lbl.classList.add('placeholder'); }
+  renderTecOptions('');
 }
 
 function renderTecChips() {
@@ -877,14 +918,77 @@ window.removerTecnico = async function(id, codigo) {
   } catch(e) { toast('Erro ao remover.','red'); }
 };
 
+/* ── Select com busca: lógica ─────────────────────── */
+let tecSelecionado = null;
+
+function renderTecOptions(filtro) {
+  const list = document.getElementById('tec-options-list');
+  if (!list) return;
+  const termo = (filtro || '').toLowerCase();
+  const filtrados = tecnicos.filter(t => t.codigo.toLowerCase().includes(termo));
+  if (!filtrados.length) {
+    list.innerHTML = '<div class="tec-no-results"><i class="ti ti-search-off" style="display:block;font-size:22px;margin-bottom:6px;opacity:.3"></i>Nenhum resultado</div>';
+    return;
+  }
+  list.innerHTML = filtrados.map(t => {
+    const sel = tecSelecionado === t.codigo;
+    let label = t.codigo;
+    if (termo) {
+      const idx = t.codigo.toLowerCase().indexOf(termo);
+      if (idx >= 0) {
+        label = t.codigo.slice(0,idx)
+          + '<mark class="tec-option-highlight">' + t.codigo.slice(idx, idx+termo.length) + '</mark>'
+          + t.codigo.slice(idx+termo.length);
+      }
+    }
+    return `<div class="tec-option${sel?' selected':''}" onclick="selecionarTecnico('${t.codigo}')">
+      <i class="ti ti-hard-hat"></i>${label}
+    </div>`;
+  }).join('');
+}
+
+window.toggleTecDropdown = function() {
+  const box = document.getElementById('tec-searchselect');
+  const isOpen = box.classList.contains('open');
+  if (isOpen) {
+    box.classList.remove('open');
+  } else {
+    box.classList.add('open');
+    setTimeout(() => {
+      const inp = document.getElementById('tec-search-input');
+      if (inp) { inp.value = ''; inp.focus(); }
+      renderTecOptions('');
+    }, 50);
+  }
+};
+
+window.filtrarTecnicos = function(val) { renderTecOptions(val); };
+
+window.selecionarTecnico = function(codigo) {
+  tecSelecionado = codigo;
+  // Atualiza label do trigger
+  const lbl = document.getElementById('tec-trigger-label');
+  if (lbl) { lbl.textContent = codigo; lbl.classList.remove('placeholder'); }
+  // Atualiza o select oculto para compatibilidade
+  const sel = document.getElementById('tecnico-select');
+  if (sel) sel.value = codigo;
+  // Fecha dropdown
+  document.getElementById('tec-searchselect').classList.remove('open');
+};
+
+// Fecha dropdown ao clicar fora
+document.addEventListener('click', function(e) {
+  const box = document.getElementById('tec-searchselect');
+  if (box && !box.contains(e.target)) box.classList.remove('open');
+});
+
 window.irParaEstoque = function() {
   document.getElementById('tecnico-login-overlay').style.display = 'none';
   showSection('estoque');
 };
 
 window.confirmarTecnico = function() {
-  const sel = document.getElementById('tecnico-select');
-  const codigo = sel.value;
+  const codigo = tecSelecionado || document.getElementById('tecnico-select').value;
   if (!codigo) { toast('Selecione seu código antes de entrar.','red'); return; }
   tecnicoLogado = codigo;
   // Preenche campo de nome
@@ -903,6 +1007,9 @@ window.confirmarTecnico = function() {
 
 window.sairTecnico = function() {
   tecnicoLogado = null;
+  tecSelecionado = null;
+  const lbl = document.getElementById('tec-trigger-label');
+  if (lbl) { lbl.textContent = '— Selecione seu código —'; lbl.classList.add('placeholder'); }
   document.getElementById('tecnico-nome').value = '';
   document.getElementById('tecnico-logged-bar').style.display = 'none';
   document.getElementById('card-tecnico-nome').style.display = 'none';

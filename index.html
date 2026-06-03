@@ -602,7 +602,17 @@ window.showSection = function(s) {
     document.getElementById('tab-'+k).classList.toggle('active', k===s);
   });
   document.getElementById('header-sub').textContent = subs[s] || '';
-  if (s==='pedidos') { renderStats(); renderPedidos(); }
+  if (s==='pedidos') {
+    const user = auth.currentUser;
+    if (user && user.email.endsWith('@viuinternet.com.br')) {
+      document.getElementById('pedidos-auth-wall').style.display = 'none';
+      document.getElementById('pedidos-content').style.display = 'block';
+      renderStats(); renderPedidos();
+    } else {
+      document.getElementById('pedidos-auth-wall').style.display = 'flex';
+      document.getElementById('pedidos-content').style.display = 'none';
+    }
+  }
   if (s==='catalogo') renderCatalogo();
   if (s==='novo') renderCatalogChips();
   if (s==='estoque') {
@@ -630,6 +640,12 @@ window.loginGoogle = async function() {
     showEstoqueContent(result.user);
     renderKanban();
     renderDashboard();
+    // Se estiver na aba de pedidos, libera o conteúdo também
+    if (document.getElementById('sec-pedidos').classList.contains('active')) {
+      document.getElementById('pedidos-auth-wall').style.display = 'none';
+      document.getElementById('pedidos-content').style.display = 'block';
+      renderStats(); renderPedidos();
+    }
     toast('Bem-vindo, ' + result.user.displayName + '!', 'green');
   } catch(e) {
     toast('Erro no login: ' + e.message, 'red');
@@ -640,6 +656,8 @@ window.logoutGoogle = async function() {
   await signOut(auth);
   document.getElementById('estoque-auth-wall').style.display = 'flex';
   document.getElementById('estoque-content').style.display = 'none';
+  document.getElementById('pedidos-auth-wall').style.display = 'flex';
+  document.getElementById('pedidos-content').style.display = 'none';
   toast('Sessão encerrada.', 'blue');
 };
 
@@ -661,13 +679,25 @@ function showEstoqueContent(user) {
 
 // Reage a mudanças de autenticação (ex: reload da página)
 onAuthStateChanged(auth, user => {
+  const authed = user && user.email.endsWith('@viuinternet.com.br');
   if (document.getElementById('sec-estoque').classList.contains('active')) {
-    if (user && user.email.endsWith('@viuinternet.com.br')) {
+    if (authed) {
       showEstoqueContent(user); renderKanban(); renderDashboard();
     } else {
       if (user) signOut(auth);
       document.getElementById('estoque-auth-wall').style.display = 'flex';
       document.getElementById('estoque-content').style.display = 'none';
+    }
+  }
+  if (document.getElementById('sec-pedidos').classList.contains('active')) {
+    if (authed) {
+      document.getElementById('pedidos-auth-wall').style.display = 'none';
+      document.getElementById('pedidos-content').style.display = 'block';
+      renderStats(); renderPedidos();
+    } else {
+      if (user) signOut(auth);
+      document.getElementById('pedidos-auth-wall').style.display = 'flex';
+      document.getElementById('pedidos-content').style.display = 'none';
     }
   }
 });
@@ -1289,4 +1319,5 @@ renderItems();
     </div>
 </footer>
 </body>
+</html>
 </html>

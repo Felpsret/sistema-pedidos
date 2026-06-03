@@ -252,6 +252,35 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
 .user-name { font-size:13px; font-weight:500; color:var(--brand-dark); flex:1; }
 .user-email { font-size:11px; color:var(--text-muted); }
 
+/* ── Tela de login do técnico ─────────────────────── */
+.tecnico-login-overlay { position:fixed; inset:0; background:rgba(4,44,83,0.55); z-index:2000; display:flex; align-items:center; justify-content:center; padding:1rem; backdrop-filter:blur(3px); }
+.tecnico-login-box { background:var(--surface); border-radius:var(--radius-lg); border:0.5px solid var(--border-md); box-shadow:0 12px 48px rgba(4,44,83,0.28); width:100%; max-width:420px; animation:modal-in .2s ease; overflow:hidden; }
+.tecnico-login-header { background:var(--brand); padding:1.5rem 1.5rem 1.25rem; text-align:center; }
+.tecnico-login-icon { width:56px; height:56px; background:rgba(255,255,255,.15); border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:28px; margin:0 auto 12px; }
+.tecnico-login-title { font-size:19px; font-weight:600; color:#fff; }
+.tecnico-login-sub { font-size:13px; color:rgba(255,255,255,.75); margin-top:4px; }
+.tecnico-login-body { padding:1.5rem; }
+.tecnico-login-body label { font-size:12px; color:var(--text-muted); display:block; margin-bottom:6px; font-weight:500; text-transform:uppercase; letter-spacing:.04em; }
+.tecnico-select { width:100%; padding:10px 12px; border:0.5px solid var(--border-md); border-radius:var(--radius); font-size:15px; background:var(--surface); color:var(--text); font-family:var(--font); transition:border-color .15s; appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%235a7fa8' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; background-size:16px; padding-right:36px; }
+.tecnico-select:focus { outline:none; border-color:var(--brand); box-shadow:0 0 0 3px rgba(24,95,165,0.12); }
+.btn-tecnico-entrar { width:100%; padding:12px; font-size:15px; justify-content:center; margin-top:14px; border-radius:var(--radius); }
+
+/* ── Notificação pedido pronto ─────────────────────── */
+.notify-bar { display:none; align-items:center; gap:12px; background:linear-gradient(135deg,#3B6D11,#639922); border-radius:var(--radius-lg); padding:.9rem 1.25rem; margin-bottom:1rem; box-shadow:0 4px 16px rgba(59,109,17,.3); animation:pulse-green 2s ease-in-out infinite; }
+.notify-bar.show { display:flex; }
+@keyframes pulse-green { 0%,100%{box-shadow:0 4px 16px rgba(59,109,17,.3);} 50%{box-shadow:0 4px 24px rgba(59,109,17,.55);} }
+.notify-bell { width:42px; height:42px; background:rgba(255,255,255,.18); border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:22px; flex-shrink:0; }
+.notify-text { flex:1; }
+.notify-text strong { color:#fff; font-size:15px; font-weight:600; display:block; }
+.notify-text span { color:rgba(255,255,255,.85); font-size:13px; }
+.notify-count { background:rgba(255,255,255,.22); color:#fff; font-size:18px; font-weight:700; padding:6px 14px; border-radius:var(--radius); border:0.5px solid rgba(255,255,255,.3); }
+
+/* ── Gerenciamento de técnicos (Estoque) ─────────────── */
+.tec-chip { display:inline-flex; align-items:center; gap:8px; background:var(--brand-light); border:0.5px solid var(--brand-mid); border-radius:99px; padding:5px 12px; font-size:13px; color:var(--brand-dark); font-weight:500; }
+.tec-chip-rm { background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:14px; display:flex; padding:0; margin-left:2px; }
+.tec-chip-rm:hover { color:var(--red-text); }
+.tec-chips-wrap { display:flex; flex-wrap:wrap; gap:8px; min-height:36px; }
+
 /* Rodapé Desenvolvedor */
 .dev-footer{
     margin-top: 30px;
@@ -337,11 +366,51 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
 
   <!-- NOVO PEDIDO -->
   <div class="section active" id="sec-novo">
-    <div class="card">
+
+    <!-- Tela de login do técnico -->
+    <div id="tecnico-login-overlay" class="tecnico-login-overlay">
+      <div class="tecnico-login-box">
+        <div class="tecnico-login-header">
+          <div class="tecnico-login-icon"><i class="ti ti-hard-hat"></i></div>
+          <div class="tecnico-login-title">Identificação do Técnico</div>
+          <div class="tecnico-login-sub">Selecione seu código para acessar o sistema</div>
+        </div>
+        <div class="tecnico-login-body">
+          <label>Quem é você?</label>
+          <select class="tecnico-select" id="tecnico-select">
+            <option value="">— Selecione seu código —</option>
+          </select>
+          <button class="btn btn-primary btn-tecnico-entrar" onclick="confirmarTecnico()">
+            <i class="ti ti-login"></i> Entrar como técnico
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Notificação: pedido pronto -->
+    <div class="notify-bar" id="notify-bar">
+      <div class="notify-bell"><i class="ti ti-bell-ringing"></i></div>
+      <div class="notify-text">
+        <strong>🎉 Seu(s) pedido(s) está(ão) pronto(s)!</strong>
+        <span id="notify-msg">Dirija-se ao estoque para retirar.</span>
+      </div>
+      <div class="notify-count" id="notify-count">1</div>
+    </div>
+
+    <!-- Badge do técnico logado -->
+    <div id="tecnico-logged-bar" style="display:none;align-items:center;gap:10px;background:var(--brand-light);border:0.5px solid var(--brand-mid);border-radius:var(--radius);padding:8px 14px;margin-bottom:1rem;">
+      <i class="ti ti-hard-hat" style="color:var(--brand);font-size:18px"></i>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;color:var(--brand-dark)" id="tecnico-logged-nome"></div>
+        <div style="font-size:11px;color:var(--text-muted)">Técnico identificado</div>
+      </div>
+      <button class="btn-logout" onclick="sairTecnico()" style="font-size:12px;padding:4px 10px"><i class="ti ti-logout"></i> Sair</button>
+    </div>
+
+    <div class="card" id="card-tecnico-nome" style="display:none">
       <div class="card-title"><i class="ti ti-user" aria-hidden="true"></i> Identificação do técnico</div>
       <div class="form-full">
-        <label>Seu nome</label>
-        <input type="text" id="tecnico-nome" placeholder="Digite seu nome completo" />
+        <label>Seu código</label>
+        <input type="text" id="tecnico-nome" placeholder="" readonly style="background:var(--bg);cursor:default;font-weight:600;font-size:15px;color:var(--brand-dark)" />
       </div>
     </div>
     <div class="card">
@@ -455,6 +524,20 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
       <div class="card-title"><i class="ti ti-user" aria-hidden="true"></i> Seu nome</div>
       <div style="max-width:360px">
         <input type="text" id="estoque-nome" placeholder="Nome do funcionário de estoque" />
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:1rem">
+      <div class="card-title"><i class="ti ti-hard-hat" aria-hidden="true"></i> Gerenciar Técnicos</div>
+      <div style="max-width:480px">
+        <label>Cadastrar novo técnico (ex: FP_116)</label>
+        <div class="inline-add" style="margin-bottom:12px">
+          <input type="text" id="tec-novo-codigo" placeholder="Ex: FP_116" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()" />
+          <button class="btn btn-primary btn-sm" onclick="cadastrarTecnico()"><i class="ti ti-plus"></i> Adicionar</button>
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em;font-weight:500">Técnicos cadastrados</div>
+        <div class="tec-chips-wrap" id="tec-chips-wrap">
+          <span style="font-size:13px;color:var(--text-muted)">Nenhum técnico cadastrado.</span>
+        </div>
       </div>
     </div>
     <div class="kanban-board" id="kanban-board"></div>
@@ -600,17 +683,11 @@ try {
   }
 } catch(e) {}
 
-// Restaura nomes salvos
+// Restaura nome do estoque salvo
 try {
-  const savedTecnico = localStorage.getItem('tecnico_nome');
-  if (savedTecnico) document.getElementById('tecnico-nome').value = savedTecnico;
   const savedEstoque = localStorage.getItem('estoque_nome');
   if (savedEstoque) document.getElementById('estoque-nome').value = savedEstoque;
 } catch(e) {}
-
-document.getElementById('tecnico-nome').addEventListener('input', function() {
-  try { localStorage.setItem('tecnico_nome', this.value); } catch(e) {}
-});
 document.getElementById('estoque-nome').addEventListener('input', function() {
   try { localStorage.setItem('estoque_nome', this.value); } catch(e) {}
 });
@@ -635,7 +712,13 @@ window.showSection = function(s) {
     }
   }
   if (s==='catalogo') renderCatalogo();
-  if (s==='novo') renderCatalogChips();
+  if (s==='novo') {
+    renderCatalogChips();
+    // Se não há técnico logado, mostra overlay de login
+    if (!tecnicoLogado) {
+      document.getElementById('tecnico-login-overlay').style.display = 'flex';
+    }
+  }
   if (s==='estoque') {
     const user = auth.currentUser;
     if (user) {
@@ -735,7 +818,101 @@ function badgeFor(s) {
   return `<span class="badge badge-${s}">${l[s]||s}</span>`;
 }
 
-/* ─── Catálogo ─────────────────────────────────── */
+/* ─── Técnicos cadastrados ──────────────────── */
+let tecnicos = []; // [{id, codigo}]
+let tecnicoLogado = null; // string codigo
+
+function renderTecSelect() {
+  const sel = document.getElementById('tecnico-select');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— Selecione seu código —</option>' +
+    tecnicos.map(t => `<option value="${t.codigo}">${t.codigo}</option>`).join('');
+}
+
+function renderTecChips() {
+  const wrap = document.getElementById('tec-chips-wrap');
+  if (!wrap) return;
+  if (!tecnicos.length) {
+    wrap.innerHTML = '<span style="font-size:13px;color:var(--text-muted)">Nenhum técnico cadastrado.</span>';
+    return;
+  }
+  wrap.innerHTML = tecnicos.map(t =>
+    `<div class="tec-chip">
+      <i class="ti ti-hard-hat" style="font-size:13px;opacity:.6"></i>${t.codigo}
+      <button class="tec-chip-rm" onclick="removerTecnico('${t.id}','${t.codigo}')" title="Remover">
+        <i class="ti ti-x"></i>
+      </button>
+    </div>`
+  ).join('');
+}
+
+window.cadastrarTecnico = async function() {
+  const inp = document.getElementById('tec-novo-codigo');
+  const codigo = inp.value.trim().toUpperCase();
+  if (!codigo) { toast('Digite o código do técnico.','red'); return; }
+  if (tecnicos.find(t => t.codigo === codigo)) { toast('Técnico já cadastrado.','red'); return; }
+  try {
+    await addDoc(collection(db,'tecnicos'), { codigo, criadoEm: serverTimestamp() });
+    inp.value = '';
+    toast('Técnico ' + codigo + ' cadastrado!','green');
+  } catch(e) { toast('Erro: '+e.message,'red'); }
+};
+
+window.removerTecnico = async function(id, codigo) {
+  if (!confirm(`Remover técnico "${codigo}"?\nEle não conseguirá mais fazer pedidos.`)) return;
+  try {
+    await deleteDoc(doc(db,'tecnicos',id));
+    toast('Técnico ' + codigo + ' removido.','blue');
+  } catch(e) { toast('Erro ao remover.','red'); }
+};
+
+window.confirmarTecnico = function() {
+  const sel = document.getElementById('tecnico-select');
+  const codigo = sel.value;
+  if (!codigo) { toast('Selecione seu código antes de entrar.','red'); return; }
+  tecnicoLogado = codigo;
+  // Preenche campo de nome
+  document.getElementById('tecnico-nome').value = codigo;
+  try { localStorage.setItem('tecnico_nome', codigo); } catch(e) {}
+  // Mostra overlay e barra
+  document.getElementById('tecnico-login-overlay').style.display = 'none';
+  const bar = document.getElementById('tecnico-logged-bar');
+  bar.style.display = 'flex';
+  document.getElementById('tecnico-logged-nome').textContent = codigo;
+  document.getElementById('card-tecnico-nome').style.display = 'block';
+  // Verifica pedidos prontos
+  checkPedidosProntos(codigo);
+  toast('Bem-vindo, ' + codigo + '!','green');
+};
+
+window.sairTecnico = function() {
+  tecnicoLogado = null;
+  document.getElementById('tecnico-nome').value = '';
+  document.getElementById('tecnico-logged-bar').style.display = 'none';
+  document.getElementById('card-tecnico-nome').style.display = 'none';
+  document.getElementById('notify-bar').classList.remove('show');
+  document.getElementById('tecnico-login-overlay').style.display = 'flex';
+  try { localStorage.removeItem('tecnico_nome'); } catch(e) {}
+};
+
+function checkPedidosProntos(codigo) {
+  const prontos = pedidos.filter(p =>
+    p.tecnico === codigo && p.status === 'separado'
+  );
+  const bar = document.getElementById('notify-bar');
+  if (prontos.length > 0) {
+    bar.classList.add('show');
+    document.getElementById('notify-count').textContent = prontos.length;
+    document.getElementById('notify-msg').textContent =
+      prontos.length === 1
+        ? 'Seu pedido está separado. Dirija-se ao estoque!'
+        : `Você tem ${prontos.length} pedidos separados. Dirija-se ao estoque!`;
+  } else {
+    bar.classList.remove('show');
+  }
+}
+
+
 function renderCatalogChips() {
   const searchEl = document.getElementById('cat-search-novo');
   const q = searchEl ? searchEl.value.toLowerCase().trim() : '';
@@ -939,7 +1116,7 @@ window.enviarPedido = async function() {
     document.getElementById('obs').value='';
     renderItems();
     toast('Pedido '+id+' enviado!','green');
-    // Não redireciona para pedidos — área restrita ao estoque
+    if (tecnicoLogado) checkPedidosProntos(tecnicoLogado);
   } catch(e) { toast('Erro: '+e.message,'red'); }
 };
 
@@ -1166,6 +1343,12 @@ function renderKanban() {
 
 /* ─── Firebase listeners ───────────────────────── */
 async function init() {
+  onSnapshot(query(collection(db,'tecnicos'), orderBy('criadoEm','asc')), snap => {
+    tecnicos = snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderTecSelect();
+    renderTecChips();
+  });
+
   onSnapshot(query(collection(db,'catalogo'), orderBy('criadoEm','asc')), snap => {
     catalogo = snap.docs.map(d=>({id:d.id,...d.data()}));
     // Persiste catálogo no localStorage para não perder no F5
@@ -1179,6 +1362,8 @@ async function init() {
     if (document.getElementById('sec-pedidos').classList.contains('active')) { renderStats(); renderPedidos(); }
     if (document.getElementById('sec-estoque').classList.contains('active')) { renderKanban(); if(auth.currentUser) renderDashboard(); }
     if (document.getElementById('sec-dashboard').classList.contains('active')) renderDashboard();
+    // Atualiza notificação do técnico logado
+    if (tecnicoLogado) checkPedidosProntos(tecnicoLogado);
   });
 
   document.getElementById('loading-overlay').style.display='none';

@@ -129,7 +129,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
 
 /* ── KANBAN ───────────────────────────────────────────── */
 .kanban-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 10px; }
-.kanban-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; align-items: start; }
+.kanban-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; align-items: start; }
 .kanban-col { background: var(--surface); border: 0.5px solid var(--border-md); border-radius: var(--radius-lg); overflow: hidden; }
 .kanban-col-header { padding: .75rem 1rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 0.5px solid var(--border-md); }
 .kanban-col-title { font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: .05em; display: flex; align-items: center; gap: 8px; }
@@ -1504,8 +1504,6 @@ window.abrirModal = function(docId) {
     footer = `<button class="btn btn-primary btn-sm" onclick="marcarSeparado('${p._docId}');closeModal()"><i class="ti ti-check" aria-hidden="true"></i> Marcar como separado</button>`;
   } else if (p.status === 'separado') {
     footer = `<button class="btn btn-success btn-sm" onclick="confirmarRetirada('${p._docId}');closeModal()"><i class="ti ti-package-export" aria-hidden="true"></i> Confirmar retirada</button>`;
-  } else if (p.status === 'retirado') {
-    footer = `<button class="kanban-delete-btn" style="margin:0" onclick="deletarRetirado('${p._docId}');closeModal()"><i class="ti ti-trash" aria-hidden="true"></i> Apagar do histórico</button>`;
   }
   document.getElementById('modal-footer').innerHTML = footer || `<button class="btn btn-sm" style="background:var(--bg);color:var(--text-muted);border:0.5px solid var(--border-md)" onclick="closeModal()">Fechar</button>`;
   document.getElementById('modal-overlay').classList.add('open');
@@ -1537,7 +1535,6 @@ function kanbanCard(p) {
   }
   const sepInfo = p.separadoPor ? `<div class="kanban-sep-by"><i class="ti ti-user" aria-hidden="true" style="font-size:11px;margin-right:3px"></i>Separado por <strong>${p.separadoPor}</strong></div>` : '';
   const retInfo = p.retiradoPor ? `<div class="kanban-sep-by"><i class="ti ti-package-export" aria-hidden="true" style="font-size:11px;margin-right:3px"></i>Retirado por <strong>${p.retiradoPor}</strong></div>` : '';
-  const deleteBtn = p.status==='retirado' ? `<button class="kanban-delete-btn" onclick="event.stopPropagation();deletarRetirado('${p._docId}')"><i class="ti ti-trash" aria-hidden="true"></i> Apagar</button>` : '';
   return `<div class="kanban-card" onclick="abrirModal('${p._docId}')" style="cursor:pointer" title="Ver detalhes completos">
     <div class="kanban-card-id">${p.id}</div>
     <div class="kanban-card-tecnico"><i class="ti ti-user" aria-hidden="true" style="font-size:13px;opacity:.5;margin-right:4px"></i>${p.tecnico}</div>
@@ -1546,7 +1543,6 @@ function kanbanCard(p) {
     <div class="kanban-card-data"><i class="ti ti-clock" aria-hidden="true" style="font-size:11px;margin-right:3px"></i>${p.data}</div>
     ${sepInfo}${retInfo}
     ${actions?`<div class="kanban-card-actions" onclick="event.stopPropagation()">${actions}</div>`:''}
-    ${deleteBtn}
   </div>`;
 }
 
@@ -1554,33 +1550,13 @@ function renderKanban() {
   const cols = [
     { key:'pendente', label:'Pendente', icon:'ti-clock' },
     { key:'em_separacao', label:'Em Separação', icon:'ti-loader' },
-    { key:'separado', label:'Separado', icon:'ti-check' },
-    { key:'retirado', label:'Retirados', icon:'ti-package-export' }
+    { key:'separado', label:'Separado', icon:'ti-check' }
   ];
   document.getElementById('kanban-board').innerHTML = cols.map(col => {
     const items = pedidos.filter(p=>p.status===col.key);
     let cards = '';
     if (!items.length) {
       cards = `<div class="kanban-empty"><i class="ti ${col.icon}" aria-hidden="true"></i>Nenhum pedido</div>`;
-    } else if (col.key === 'retirado') {
-      // Agrupa por data de retirada (extrai só a data, sem hora)
-      const grupos = {};
-      items.forEach(p => {
-        const dataKey = p.dataRetirada ? p.dataRetirada.split(' ')[0] : p.data ? p.data.split(' ')[0] : 'Sem data';
-        if (!grupos[dataKey]) grupos[dataKey] = [];
-        grupos[dataKey].push(p);
-      });
-      // Ordena as datas (mais recente primeiro)
-      const datasOrdenadas = Object.keys(grupos).sort((a, b) => {
-        const parse = s => { const [d,m,y] = s.split('/'); return new Date(+y,+m-1,+d); };
-        return parse(b) - parse(a);
-      });
-      cards = datasOrdenadas.map(data => {
-        const isToday = data === new Date().toLocaleDateString('pt-BR');
-        const label = isToday ? `Hoje — ${data}` : data;
-        return `<div class="kanban-date-sep"><i class="ti ti-calendar" aria-hidden="true"></i>${label} <span style="opacity:.5;font-weight:400">(${grupos[data].length})</span></div>` +
-          grupos[data].map(kanbanCard).join('');
-      }).join('');
     } else {
       cards = items.map(kanbanCard).join('');
     }

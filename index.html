@@ -117,6 +117,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
 /* Badges */
 .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 500; }
 .badge-pendente { background: var(--amber-bg); color: var(--amber-text); }
+.badge-em_separacao { background: #F3E8FF; color: #5B21B6; }
 .badge-separado { background: var(--brand-light); color: var(--brand-dark); }
 .badge-retirado { background: #EAF3DE; color: #27500A; }
 .badge-cancelado { background: var(--red-bg); color: var(--red-text); }
@@ -128,7 +129,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
 
 /* ── KANBAN ───────────────────────────────────────────── */
 .kanban-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 10px; }
-.kanban-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; align-items: start; }
+.kanban-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; align-items: start; }
 .kanban-col { background: var(--surface); border: 0.5px solid var(--border-md); border-radius: var(--radius-lg); overflow: hidden; }
 .kanban-col-header { padding: .75rem 1rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 0.5px solid var(--border-md); }
 .kanban-col-title { font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: .05em; display: flex; align-items: center; gap: 8px; }
@@ -136,6 +137,9 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
 .col-pendente .kanban-col-header { background: #FEF6E8; }
 .col-pendente .kanban-col-title { color: var(--amber-text); }
 .col-pendente .col-count { background: var(--amber-bg); color: var(--amber-text); }
+.col-em_separacao .kanban-col-header { background: #F3E8FF; }
+.col-em_separacao .kanban-col-title { color: #5B21B6; }
+.col-em_separacao .col-count { background: #EDE9FE; color: #5B21B6; }
 .col-separado .kanban-col-header { background: var(--brand-light); }
 .col-separado .kanban-col-title { color: var(--brand-dark); }
 .col-separado .col-count { background: var(--brand-mid); color: var(--brand-darker); }
@@ -308,6 +312,15 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
 .tec-chip-rm:hover { color:var(--red-text); }
 .tec-chips-wrap { display:flex; flex-wrap:wrap; gap:8px; min-height:36px; }
 
+/* ── Meus Pedidos (técnico) ──────────────────────── */
+.meus-pedidos-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:8px; }
+.meus-pedidos-title { font-size:17px; font-weight:600; color:var(--brand-dark); display:flex; align-items:center; gap:8px; }
+.meus-pedidos-list { display:flex; flex-direction:column; gap:10px; }
+.meu-pedido-card { background:var(--surface); border:0.5px solid var(--border-md); border-radius:var(--radius-lg); padding:1rem 1.25rem; position:relative; overflow:hidden; transition: box-shadow .2s; }
+.meu-pedido-card.status-separado { border-color:#185FA5; box-shadow:0 0 0 2px rgba(24,95,165,0.25); }
+.meu-pedido-card.status-em_separacao { border-color:#7C3AED; box-shadow:0 0 0 2px rgba(124,58,237,0.18); }
+.meu-pedido-pronto-banner { background:linear-gradient(135deg,#3B6D11,#639922); border-radius:var(--radius); padding:8px 12px; margin-bottom:10px; display:flex; align-items:center; gap:8px; color:#fff; font-size:13px; font-weight:500; animation:pulse-green 2s ease-in-out infinite; }
+.meu-pedido-em-sep-banner { background:linear-gradient(135deg,#5B21B6,#7C3AED); border-radius:var(--radius); padding:8px 12px; margin-bottom:10px; display:flex; align-items:center; gap:8px; color:#fff; font-size:13px; font-weight:500; }
 /* Rodapé Desenvolvedor */
 .dev-footer{
     margin-top: 30px;
@@ -385,6 +398,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
     </div>
     <div class="nav">
       <button class="nav-btn active" onclick="showSection('novo')" id="tab-novo"><i class="ti ti-plus" aria-hidden="true"></i> Novo pedido</button>
+      <button class="nav-btn" onclick="showSection('meus-pedidos')" id="tab-meus-pedidos" style="display:none"><i class="ti ti-clipboard-list" aria-hidden="true"></i> Meus Pedidos <span id="tab-meus-pedidos-badge" style="display:none;background:#185FA5;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;margin-left:2px;vertical-align:middle"></span></button>
       <button class="nav-btn" onclick="showSection('pedidos')" id="tab-pedidos"><i class="ti ti-list" aria-hidden="true"></i> Todos os pedidos</button>
       <button class="nav-btn" onclick="showSection('estoque')" id="tab-estoque"><i class="ti ti-layout-kanban" aria-hidden="true"></i> Estoque</button>
       <button class="nav-btn" onclick="showSection('catalogo')" id="tab-catalogo"><i class="ti ti-box" aria-hidden="true"></i> Catálogo</button>
@@ -485,6 +499,21 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
     </button>
   </div>
 
+  <!-- MEUS PEDIDOS (técnico logado) -->
+  <div class="section" id="sec-meus-pedidos">
+    <div class="card" style="margin-bottom:1rem">
+      <div class="meus-pedidos-header">
+        <div class="meus-pedidos-title"><i class="ti ti-clipboard-list"></i> Meus Pedidos</div>
+        <span id="meus-pedidos-tec-label" style="font-size:12px;color:var(--text-muted);background:var(--brand-light);padding:3px 10px;border-radius:99px;border:0.5px solid var(--brand-mid);color:var(--brand-dark);font-weight:500"></span>
+      </div>
+      <div id="meus-pedidos-notify" style="display:none" class="meu-pedido-pronto-banner">
+        <i class="ti ti-bell-ringing" style="font-size:18px;flex-shrink:0"></i>
+        <span id="meus-pedidos-notify-msg">Pedido(s) pronto(s) para retirada!</span>
+      </div>
+      <div id="meus-pedidos-list" class="meus-pedidos-list"></div>
+    </div>
+  </div>
+
   <!-- TODOS OS PEDIDOS -->
   <div class="section" id="sec-pedidos">
 
@@ -512,6 +541,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
         <select id="filtro-status" onchange="renderPedidos()" style="padding:8px 10px;font-size:14px;border-radius:var(--radius);border:0.5px solid var(--border-md);background:var(--surface);color:var(--text)">
           <option value="">Todos os status</option>
           <option value="pendente">Pendente</option>
+          <option value="em_separacao">Em Separação</option>
           <option value="separado">Separado</option>
           <option value="retirado">Retirado</option>
           <option value="cancelado">Cancelado</option>
@@ -739,14 +769,19 @@ document.getElementById('estoque-nome').addEventListener('input', function() {
   try { localStorage.setItem('estoque_nome', this.value); } catch(e) {}
 });
 
-const subs = { novo:'Técnico — novo pedido', pedidos:'Todos os pedidos', estoque:'Kanban do estoque', catalogo:'Catálogo de materiais' };
+const subs = { novo:'Técnico — novo pedido', 'meus-pedidos':'Meus Pedidos', pedidos:'Todos os pedidos', estoque:'Kanban do estoque', catalogo:'Catálogo de materiais' };
 
 window.showSection = function(s) {
-  ['novo','pedidos','estoque','catalogo'].forEach(k => {
-    document.getElementById('sec-'+k).classList.toggle('active', k===s);
-    document.getElementById('tab-'+k).classList.toggle('active', k===s);
+  ['novo','meus-pedidos','pedidos','estoque','catalogo'].forEach(k => {
+    const sec = document.getElementById('sec-'+k);
+    const tab = document.getElementById('tab-'+k);
+    if (sec) sec.classList.toggle('active', k===s);
+    if (tab) tab.classList.toggle('active', k===s);
   });
   document.getElementById('header-sub').textContent = subs[s] || '';
+  if (s==='meus-pedidos') {
+    renderMeusPedidos();
+  }
   if (s==='pedidos') {
     const user = auth.currentUser;
     if (user && user.email.endsWith('@viuinternet.com.br')) {
@@ -861,7 +896,7 @@ function toast(msg, tipo) {
 window.toast = toast;
 
 function badgeFor(s) {
-  const l = { pendente:'Pendente', separado:'Separado', retirado:'Retirado', cancelado:'Cancelado' };
+  const l = { pendente:'Pendente', em_separacao:'Em Separação', separado:'Separado', retirado:'Retirado', cancelado:'Cancelado' };
   return `<span class="badge badge-${s}">${l[s]||s}</span>`;
 }
 
@@ -1000,6 +1035,8 @@ window.confirmarTecnico = function() {
   bar.style.display = 'flex';
   document.getElementById('tecnico-logged-nome').textContent = codigo;
   document.getElementById('card-tecnico-nome').style.display = 'block';
+  // Mostra aba Meus Pedidos
+  document.getElementById('tab-meus-pedidos').style.display = '';
   // Verifica pedidos prontos
   checkPedidosProntos(codigo);
   toast('Bem-vindo, ' + codigo + '!','green');
@@ -1014,6 +1051,9 @@ window.sairTecnico = function() {
   document.getElementById('tecnico-logged-bar').style.display = 'none';
   document.getElementById('card-tecnico-nome').style.display = 'none';
   document.getElementById('notify-bar').classList.remove('show');
+  // Esconde aba Meus Pedidos e volta para Novo Pedido
+  document.getElementById('tab-meus-pedidos').style.display = 'none';
+  if (document.getElementById('sec-meus-pedidos').classList.contains('active')) showSection('novo');
   document.getElementById('tecnico-login-overlay').style.display = 'flex';
   try { localStorage.removeItem('tecnico_nome'); } catch(e) {}
 };
@@ -1021,6 +1061,9 @@ window.sairTecnico = function() {
 function checkPedidosProntos(codigo) {
   const prontos = pedidos.filter(p =>
     p.tecnico === codigo && p.status === 'separado'
+  );
+  const emSep = pedidos.filter(p =>
+    p.tecnico === codigo && p.status === 'em_separacao'
   );
   const bar = document.getElementById('notify-bar');
   if (prontos.length > 0) {
@@ -1033,7 +1076,79 @@ function checkPedidosProntos(codigo) {
   } else {
     bar.classList.remove('show');
   }
+  // Atualiza badge da aba Meus Pedidos
+  const badge = document.getElementById('tab-meus-pedidos-badge');
+  const total = prontos.length + emSep.length;
+  if (badge) {
+    if (total > 0) {
+      badge.style.display = '';
+      badge.textContent = total;
+      badge.style.background = prontos.length > 0 ? '#185FA5' : '#7C3AED';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+  // Se estiver na aba meus pedidos, re-renderiza
+  if (document.getElementById('sec-meus-pedidos').classList.contains('active')) renderMeusPedidos();
 }
+
+function renderMeusPedidos() {
+  if (!tecnicoLogado) return;
+  const el = document.getElementById('meus-pedidos-list');
+  const lbl = document.getElementById('meus-pedidos-tec-label');
+  if (lbl) lbl.textContent = tecnicoLogado;
+
+  const meus = pedidos.filter(p => p.tecnico === tecnicoLogado && p.status !== 'cancelado');
+  const prontos = meus.filter(p => p.status === 'separado');
+
+  // Banner de notificação
+  const notifyEl = document.getElementById('meus-pedidos-notify');
+  if (notifyEl) {
+    if (prontos.length > 0) {
+      notifyEl.style.display = 'flex';
+      document.getElementById('meus-pedidos-notify-msg').textContent =
+        prontos.length === 1
+          ? '🎉 Seu pedido está pronto! Dirija-se ao estoque para retirar.'
+          : `🎉 Você tem ${prontos.length} pedidos prontos! Dirija-se ao estoque para retirar.`;
+    } else {
+      notifyEl.style.display = 'none';
+    }
+  }
+
+  if (!meus.length) {
+    el.innerHTML = `<div class="empty"><i class="ti ti-inbox" style="font-size:36px;display:block;margin-bottom:10px;opacity:.3"></i>Nenhum pedido encontrado.</div>`;
+    return;
+  }
+
+  // Ordena: separado primeiro, depois em_separacao, depois pendente, depois retirado
+  const ordem = { separado:0, em_separacao:1, pendente:2, retirado:3 };
+  const sorted = [...meus].sort((a,b) => (ordem[a.status]??9) - (ordem[b.status]??9));
+
+  el.innerHTML = sorted.map(p => {
+    let banner = '';
+    if (p.status === 'separado') {
+      banner = `<div class="meu-pedido-pronto-banner"><i class="ti ti-bell-ringing" style="font-size:15px;flex-shrink:0"></i> Pronto para retirada! Dirija-se ao estoque.</div>`;
+    } else if (p.status === 'em_separacao') {
+      banner = `<div class="meu-pedido-em-sep-banner"><i class="ti ti-loader" style="font-size:15px;flex-shrink:0"></i> Em separação — aguarde, logo estará pronto.</div>`;
+    }
+    const sepInfo = p.separadoPor ? `<div style="font-size:12px;color:var(--text-muted);margin-top:3px"><i class="ti ti-user" style="font-size:11px;margin-right:3px"></i>Separado por <strong style="color:var(--brand-dark)">${p.separadoPor}</strong></div>` : '';
+    const retInfo = p.retiradoPor ? `<div style="font-size:12px;color:var(--text-muted);margin-top:2px"><i class="ti ti-package-export" style="font-size:11px;margin-right:3px"></i>Retirado em ${p.dataRetirada}</div>` : '';
+    return `<div class="meu-pedido-card status-${p.status}">
+      ${banner}
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono)">${p.id}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${p.data}</div>
+          ${sepInfo}${retInfo}
+        </div>
+        <div>${badgeFor(p.status)}</div>
+      </div>
+      <div class="pedido-mats">${(p.itens||[]).map(it=>`<span class="mat-tag">${it.nome} × ${it.qty}</span>`).join('')}</div>
+      ${p.obs?`<div class="pedido-obs"><i class="ti ti-notes" style="font-size:12px;margin-right:4px"></i>${p.obs}</div>`:''}
+    </div>`;
+  }).join('');
+}
+window.renderMeusPedidos = renderMeusPedidos;
 
 
 function renderCatalogChips() {
@@ -1310,6 +1425,14 @@ function getNomeEstoque() {
   return n;
 }
 
+window.marcarEmSeparacao = async function(docId) {
+  const nome = getNomeEstoque(); if (!nome) return;
+  try {
+    await updateDoc(doc(db,'pedidos',docId), { status:'em_separacao', emSeparacaoPor:nome });
+    toast('Pedido em separação!','blue');
+  } catch(e) { toast('Erro: '+e.message,'red'); }
+};
+
 window.marcarSeparado = async function(docId) {
   const nome = getNomeEstoque(); if (!nome) return;
   try {
@@ -1375,8 +1498,10 @@ window.abrirModal = function(docId) {
   let footer = '';
   const nome = document.getElementById('estoque-nome').value.trim();
   if (p.status === 'pendente') {
-    footer = `<button class="btn btn-primary btn-sm" onclick="marcarSeparado('${p._docId}');closeModal()"><i class="ti ti-check" aria-hidden="true"></i> Separar</button>
+    footer = `<button class="btn btn-sm" style="background:#F3E8FF;color:#5B21B6;border:none" onclick="marcarEmSeparacao('${p._docId}');closeModal()"><i class="ti ti-loader" aria-hidden="true"></i> Iniciar separação</button>
               <button class="btn btn-sm" style="background:var(--red-bg);color:var(--red-text);border:none" onclick="cancelarPedido('${p._docId}');closeModal()"><i class="ti ti-x" aria-hidden="true"></i> Cancelar</button>`;
+  } else if (p.status === 'em_separacao') {
+    footer = `<button class="btn btn-primary btn-sm" onclick="marcarSeparado('${p._docId}');closeModal()"><i class="ti ti-check" aria-hidden="true"></i> Marcar como separado</button>`;
   } else if (p.status === 'separado') {
     footer = `<button class="btn btn-success btn-sm" onclick="confirmarRetirada('${p._docId}');closeModal()"><i class="ti ti-package-export" aria-hidden="true"></i> Confirmar retirada</button>`;
   } else if (p.status === 'retirado') {
@@ -1400,8 +1525,12 @@ function kanbanCard(p) {
   let actions = '';
   if (p.status==='pendente') {
     actions = `
-      <button class="btn btn-primary btn-sm" onclick="marcarSeparado('${p._docId}')"><i class="ti ti-check" aria-hidden="true"></i> Separar</button>
+      <button class="btn btn-sm" style="background:#F3E8FF;color:#5B21B6;border:none" onclick="marcarEmSeparacao('${p._docId}')"><i class="ti ti-loader" aria-hidden="true"></i> Iniciar separação</button>
       <button class="btn btn-sm" style="background:var(--red-bg);color:var(--red-text);border:none" onclick="cancelarPedido('${p._docId}')"><i class="ti ti-x" aria-hidden="true"></i> Cancelar</button>
+    `;
+  } else if (p.status==='em_separacao') {
+    actions = `
+      <button class="btn btn-primary btn-sm" onclick="marcarSeparado('${p._docId}')"><i class="ti ti-check" aria-hidden="true"></i> Separado</button>
     `;
   } else if (p.status==='separado') {
     actions = `<button class="btn btn-success btn-sm" onclick="confirmarRetirada('${p._docId}')"><i class="ti ti-package-export" aria-hidden="true"></i> Confirmar retirada</button>`;
@@ -1423,8 +1552,9 @@ function kanbanCard(p) {
 
 function renderKanban() {
   const cols = [
-    { key:'pendente', label:'Pendentes', icon:'ti-clock' },
-    { key:'separado', label:'Separados', icon:'ti-check' },
+    { key:'pendente', label:'Pendente', icon:'ti-clock' },
+    { key:'em_separacao', label:'Em Separação', icon:'ti-loader' },
+    { key:'separado', label:'Separado', icon:'ti-check' },
     { key:'retirado', label:'Retirados', icon:'ti-package-export' }
   ];
   document.getElementById('kanban-board').innerHTML = cols.map(col => {
@@ -1548,6 +1678,7 @@ function renderDashboard() {
   const lista = filterByPeriod(pedidos);
   const total = lista.length;
   const pendentes = lista.filter(p=>p.status==='pendente').length;
+  const emSep = lista.filter(p=>p.status==='em_separacao').length;
   const separados = lista.filter(p=>p.status==='separado').length;
   const retirados = lista.filter(p=>p.status==='retirado').length;
   const cancelados = lista.filter(p=>p.status==='cancelado').length;
@@ -1556,6 +1687,7 @@ function renderDashboard() {
   const kpiData = [
     { icon:'ti-clipboard-list', cor:'#E6F1FB', iconCor:'#185FA5', val:total, lbl:'Total de pedidos' },
     { icon:'ti-clock', cor:'#FAEEDA', iconCor:'#633806', val:pendentes, lbl:'Pendentes' },
+    { icon:'ti-loader', cor:'#F3E8FF', iconCor:'#5B21B6', val:emSep, lbl:'Em Separação' },
     { icon:'ti-check', cor:'#E6F1FB', iconCor:'#0C447C', val:separados, lbl:'Separados' },
     { icon:'ti-package-export', cor:'#EAF3DE', iconCor:'#27500A', val:retirados, lbl:'Retirados' },
   ];
@@ -1593,9 +1725,9 @@ function renderDashboard() {
 
   // Gráfico pizza
   if (chartPizza) chartPizza.destroy();
-  const pizzaLabels = ['Pendente','Separado','Retirado','Cancelado'];
-  const pizzaData = [pendentes, separados, retirados, cancelados];
-  const pizzaCores = ['#F5C06A','#5FA8E5','#7BC64E','#E57373'];
+  const pizzaLabels = ['Pendente','Em Separação','Separado','Retirado','Cancelado'];
+  const pizzaData = [pendentes, emSep, separados, retirados, cancelados];
+  const pizzaCores = ['#F5C06A','#A78BFA','#5FA8E5','#7BC64E','#E57373'];
   chartPizza = new Chart(document.getElementById('chart-pizza').getContext('2d'), {
     type: 'doughnut',
     data: { labels:pizzaLabels, datasets:[{data:pizzaData, backgroundColor:pizzaCores, borderWidth:2, borderColor:'#fff'}] },

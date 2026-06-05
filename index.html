@@ -379,6 +379,56 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
 .dash-tempo-val { font-size:28px; font-weight:700; color:var(--brand-dark); }
 .dash-tempo-lbl { font-size:11px; color:var(--text-muted); margin-top:4px; text-transform:uppercase; letter-spacing:.04em; }
 @media(max-width:700px){ .dash-kpis{grid-template-columns:repeat(2,1fr);} .dash-row-2{flex-direction:column;} }
+
+/* ── Push Notification permission banner ─────── */
+.notif-permission-bar {
+  display:none; align-items:center; gap:12px;
+  background:linear-gradient(135deg,#042C53,#185FA5);
+  border-radius:var(--radius-lg); padding:.9rem 1.25rem;
+  margin-bottom:1rem; box-shadow:0 4px 16px rgba(24,95,165,.3);
+}
+.notif-permission-bar.show { display:flex; }
+.notif-permission-icon { width:38px;height:38px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;flex-shrink:0; }
+.notif-permission-text { flex:1; }
+.notif-permission-text strong { color:#fff;font-size:14px;font-weight:600;display:block; }
+.notif-permission-text span { color:rgba(255,255,255,.8);font-size:12px; }
+.notif-permission-btn { background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.35);color:#fff;padding:7px 16px;border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:background .15s;white-space:nowrap; }
+.notif-permission-btn:hover { background:rgba(255,255,255,.32); }
+.notif-permission-dismiss { background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:18px;padding:2px;display:flex;flex-shrink:0; }
+.notif-permission-dismiss:hover { color:#fff; }
+
+/* ── In-app notification toast (grande, persistente) */
+.inapp-notif-overlay {
+  position:fixed;bottom:24px;right:24px;z-index:9990;
+  display:flex;flex-direction:column;gap:10px;
+  max-width:360px;width:calc(100vw - 48px);
+  pointer-events:none;
+}
+.inapp-notif {
+  background:var(--surface);border:0.5px solid var(--border-md);
+  border-radius:var(--radius-lg);box-shadow:0 8px 32px rgba(24,95,165,.18);
+  padding:1rem 1.1rem;display:flex;gap:12px;align-items:flex-start;
+  pointer-events:all;animation:notif-slide-in .3s cubic-bezier(.34,1.56,.64,1);
+  position:relative;overflow:hidden;
+}
+.inapp-notif::before { content:'';position:absolute;left:0;top:0;bottom:0;width:4px; }
+.inapp-notif.tipo-novo::before { background:var(--brand); }
+.inapp-notif.tipo-separado::before { background:var(--green-mid); }
+.inapp-notif-icon { width:38px;height:38px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0; }
+.inapp-notif.tipo-novo .inapp-notif-icon { background:var(--brand-light);color:var(--brand); }
+.inapp-notif.tipo-separado .inapp-notif-icon { background:var(--green-light);color:var(--green); }
+.inapp-notif-body { flex:1;min-width:0; }
+.inapp-notif-title { font-size:13.5px;font-weight:600;color:var(--text);margin-bottom:3px; }
+.inapp-notif-msg { font-size:12.5px;color:var(--text-muted);line-height:1.5; }
+.inapp-notif-time { font-size:11px;color:var(--text-muted);margin-top:5px; }
+.inapp-notif-close { background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:2px;display:flex;flex-shrink:0;border-radius:var(--radius);transition:all .12s; }
+.inapp-notif-close:hover { background:var(--bg);color:var(--text); }
+.inapp-notif-progress { position:absolute;bottom:0;left:0;height:3px;border-radius:0 0 0 var(--radius-lg);animation:notif-progress 6s linear forwards; }
+.inapp-notif.tipo-novo .inapp-notif-progress { background:var(--brand); }
+.inapp-notif.tipo-separado .inapp-notif-progress { background:var(--green-mid); }
+@keyframes notif-slide-in { from{opacity:0;transform:translateX(24px) scale(.95);} to{opacity:1;transform:none;} }
+@keyframes notif-progress { from{width:100%;} to{width:0%;} }
+@keyframes notif-slide-out { to{opacity:0;transform:translateX(24px) scale(.92);max-height:0;padding:0;margin:0;} }
 </style>
 </head>
 <body>
@@ -455,6 +505,17 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
         <span id="notify-msg">Dirija-se ao estoque para retirar.</span>
       </div>
       <div class="notify-count" id="notify-count">1</div>
+    </div>
+
+    <!-- Banner pedindo permissão de notificação (técnico) -->
+    <div class="notif-permission-bar" id="notif-permission-bar-tec">
+      <div class="notif-permission-icon"><i class="ti ti-bell"></i></div>
+      <div class="notif-permission-text">
+        <strong>Ativar notificações</strong>
+        <span>Receba um aviso quando seu pedido estiver separado, mesmo com a tela fechada.</span>
+      </div>
+      <button class="notif-permission-btn" onclick="solicitarPermissaoNotif('tec')"><i class="ti ti-bell-ringing"></i> Ativar</button>
+      <button class="notif-permission-dismiss" onclick="dispensarBannerNotif('tec')" title="Fechar"><i class="ti ti-x"></i></button>
     </div>
 
     <!-- Badge do técnico logado -->
@@ -597,6 +658,17 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
       </div>
       <span class="estoque-badge">ESTOQUE</span>
     </div>
+
+    <!-- Banner pedindo permissão de notificação (estoque) -->
+    <div class="notif-permission-bar" id="notif-permission-bar-estoque">
+      <div class="notif-permission-icon"><i class="ti ti-bell"></i></div>
+      <div class="notif-permission-text">
+        <strong>Ativar notificações de novos pedidos</strong>
+        <span>Receba um aviso imediato sempre que um técnico abrir um novo pedido.</span>
+      </div>
+      <button class="notif-permission-btn" onclick="solicitarPermissaoNotif('estoque')"><i class="ti ti-bell-ringing"></i> Ativar</button>
+      <button class="notif-permission-dismiss" onclick="dispensarBannerNotif('estoque')" title="Fechar"><i class="ti ti-x"></i></button>
+    </div>
     <div class="card" style="margin-bottom:1rem">
       <div class="card-title"><i class="ti ti-user" aria-hidden="true"></i> Seu nome</div>
       <div style="max-width:360px">
@@ -722,6 +794,9 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
 
 <div class="toast" id="toast"><i class="ti ti-check" aria-hidden="true"></i> <span id="toast-msg"></span></div>
 
+<!-- In-app notifications container -->
+<div class="inapp-notif-overlay" id="inapp-notif-overlay"></div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
@@ -831,6 +906,7 @@ window.loginGoogle = async function() {
       document.getElementById('pedidos-content').style.display = 'block';
       renderStats(); renderPedidos();
     }
+    verificarBannerNotif('estoque');
     toast('Bem-vindo, ' + result.user.displayName + '!', 'green');
   } catch(e) {
     toast('Erro no login: ' + e.message, 'red');
@@ -868,6 +944,7 @@ onAuthStateChanged(auth, user => {
   if (document.getElementById('sec-estoque').classList.contains('active')) {
     if (authed) {
       showEstoqueContent(user); renderKanban(); renderDashboard();
+      verificarBannerNotif('estoque');
     } else {
       if (user) signOut(auth);
       document.getElementById('estoque-auth-wall').style.display = 'flex';
@@ -1039,6 +1116,8 @@ window.confirmarTecnico = function() {
   document.getElementById('tab-meus-pedidos').style.display = '';
   // Verifica pedidos prontos
   checkPedidosProntos(codigo);
+  // Convida a ativar notificações
+  verificarBannerNotif('tec');
   toast('Bem-vindo, ' + codigo + '!','green');
 };
 
@@ -1572,10 +1651,31 @@ function renderKanban() {
 
 /* ─── Firebase listeners ───────────────────────── */
 async function init() {
+  let tecnicosRestorado = false;
   onSnapshot(query(collection(db,'tecnicos'), orderBy('criadoEm','asc')), snap => {
     tecnicos = snap.docs.map(d=>({id:d.id,...d.data()}));
     renderTecSelect();
     renderTecChips();
+
+    // Restaura login do técnico salvo no celular (só na primeira carga)
+    if (!tecnicosRestorado) {
+      tecnicosRestorado = true;
+      try {
+        const salvo = localStorage.getItem('tecnico_nome');
+        if (salvo && tecnicos.find(t => t.codigo === salvo) && !tecnicoLogado) {
+          tecSelecionado = salvo;
+          tecnicoLogado = salvo;
+          document.getElementById('tecnico-nome').value = salvo;
+          document.getElementById('tecnico-login-overlay').style.display = 'none';
+          const bar = document.getElementById('tecnico-logged-bar');
+          bar.style.display = 'flex';
+          document.getElementById('tecnico-logged-nome').textContent = salvo;
+          document.getElementById('card-tecnico-nome').style.display = 'block';
+          document.getElementById('tab-meus-pedidos').style.display = '';
+          verificarBannerNotif('tec');
+        }
+      } catch(e) {}
+    }
   });
 
   onSnapshot(query(collection(db,'catalogo'), orderBy('criadoEm','asc')), snap => {
@@ -1588,6 +1688,8 @@ async function init() {
 
   onSnapshot(query(collection(db,'pedidos'), orderBy('criadoEm','desc')), snap => {
     pedidos = snap.docs.map(d=>({_docId:d.id,...d.data()}));
+    // ── Detecta novos pedidos e mudanças de status ──
+    verificarEventosNotif(pedidos);
     if (document.getElementById('sec-pedidos').classList.contains('active')) { renderStats(); renderPedidos(); }
     if (document.getElementById('sec-estoque').classList.contains('active')) { renderKanban(); if(auth.currentUser) renderDashboard(); }
     if (document.getElementById('sec-dashboard').classList.contains('active')) renderDashboard();
@@ -1743,6 +1845,147 @@ function renderDashboard() {
     <div class="dash-tempo-card"><div class="dash-tempo-val">${total?Math.round(retirados/total*100)+'%':'—'}</div><div class="dash-tempo-lbl">Taxa de conclusão</div></div>
     <div class="dash-tempo-card"><div class="dash-tempo-val">${total?Math.round(cancelados/total*100)+'%':'—'}</div><div class="dash-tempo-lbl">Taxa de cancelamento</div></div>
   `;
+}
+
+/* ═══════════════════════════════════════════════
+   SISTEMA DE NOTIFICAÇÕES
+   ═══════════════════════════════════════════════ */
+
+let notifPermissao = (typeof Notification !== 'undefined') ? Notification.permission : 'default';
+let pedidosAnteriores = null; // null = primeira carga (não dispara notif)
+let statusAnteriores = {};    // { docId: status } — detecta troca para 'separado'
+
+// ── In-app balloon (canto inferior direito) ─────
+function mostrarInAppNotif(tipo, titulo, msg) {
+  const container = document.getElementById('inapp-notif-overlay');
+  if (!container) return;
+  const id = 'notif-' + Date.now();
+  const agora = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  const icon = tipo === 'novo' ? 'ti-clipboard-list' : 'ti-bell-ringing';
+  const div = document.createElement('div');
+  div.id = id;
+  div.className = `inapp-notif tipo-${tipo}`;
+  div.innerHTML = `
+    <div class="inapp-notif-icon"><i class="ti ${icon}"></i></div>
+    <div class="inapp-notif-body">
+      <div class="inapp-notif-title">${titulo}</div>
+      <div class="inapp-notif-msg">${msg}</div>
+      <div class="inapp-notif-time">${agora}</div>
+    </div>
+    <button class="inapp-notif-close" onclick="fecharInAppNotif('${id}')"><i class="ti ti-x"></i></button>
+    <div class="inapp-notif-progress"></div>`;
+  container.appendChild(div);
+  // Som sutil
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(tipo==='novo' ? 880 : 660, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(tipo==='novo' ? 1100 : 880, ctx.currentTime + 0.12);
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.4);
+  } catch(e) {}
+  setTimeout(() => fecharInAppNotif(id), 6000);
+}
+window.fecharInAppNotif = function(id) {
+  const el = document.getElementById(id); if (!el) return;
+  el.style.animation = 'notif-slide-out .25s ease forwards';
+  setTimeout(() => el.remove(), 260);
+};
+
+// ── Push do sistema operacional ─────────────────
+function dispararPushNotif(titulo, corpo) {
+  if (typeof Notification === 'undefined') return;
+  if (Notification.permission !== 'granted') return;
+  try {
+    const n = new Notification(titulo, {
+      body: corpo,
+      icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="%23185FA5"/><text x="32" y="44" text-anchor="middle" font-size="32">📦</text></svg>',
+      tag: titulo, renotify: true,
+    });
+    n.onclick = () => { window.focus(); n.close(); };
+    setTimeout(() => n.close(), 9000);
+  } catch(e) {}
+}
+
+// ── Solicitar permissão ─────────────────────────
+window.solicitarPermissaoNotif = async function(quem) {
+  if (typeof Notification === 'undefined') { toast('Navegador não suporta notificações.','red'); return; }
+  const perm = await Notification.requestPermission();
+  notifPermissao = perm;
+  if (perm === 'granted') {
+    try { localStorage.setItem('notif_perm_'+quem,'granted'); } catch(e) {}
+    dispensarBannerNotif(quem);
+    toast('Notificações ativadas! ✅','green');
+    dispararPushNotif('✅ Notificações ativadas!','Você receberá avisos em tempo real.');
+  } else {
+    toast('Permissão negada. Ative nas configurações do navegador.','red');
+  }
+};
+window.dispensarBannerNotif = function(quem) {
+  const bar = document.getElementById('notif-permission-bar-'+quem);
+  if (bar) bar.classList.remove('show');
+  try { localStorage.setItem('notif_dismissed_'+quem,'1'); } catch(e) {}
+};
+
+// ── Mostra banner se ainda não pediu permissão ──
+function verificarBannerNotif(quem) {
+  if (typeof Notification === 'undefined') return;
+  if (Notification.permission === 'granted' || Notification.permission === 'denied') return;
+  try { if (localStorage.getItem('notif_dismissed_'+quem)) return; } catch(e) {}
+  const bar = document.getElementById('notif-permission-bar-'+quem);
+  if (bar) bar.classList.add('show');
+}
+
+// ── Motor de detecção de eventos ────────────────
+function verificarEventosNotif(novosPedidos) {
+  if (pedidosAnteriores === null) {
+    // Primeira carga — só registra, não notifica
+    pedidosAnteriores = new Set(novosPedidos.map(p => p._docId));
+    novosPedidos.forEach(p => { statusAnteriores[p._docId] = p.status; });
+    return;
+  }
+
+  novosPedidos.forEach(p => {
+    const jaExistia = pedidosAnteriores.has(p._docId);
+
+    if (!jaExistia) {
+      // ── NOVO PEDIDO — avisa o estoque ──────────
+      pedidosAnteriores.add(p._docId);
+      statusAnteriores[p._docId] = p.status;
+      const user = auth.currentUser;
+      if (user && user.email.endsWith('@viuinternet.com.br')) {
+        const itensStr = (p.itens||[]).slice(0,3).map(it=>`${it.nome} ×${it.qty}`).join(', ');
+        mostrarInAppNotif('novo',
+          `📦 Novo pedido de ${p.tecnico}`,
+          itensStr || 'Pedido sem itens'
+        );
+        dispararPushNotif(
+          `📦 Novo pedido — ${p.tecnico}`,
+          itensStr || 'Pedido sem itens'
+        );
+      }
+    } else {
+      const statusAnterior = statusAnteriores[p._docId];
+      // ── STATUS MUDOU PARA SEPARADO — avisa o técnico ──
+      if (statusAnterior && statusAnterior !== 'separado' && p.status === 'separado') {
+        if (tecnicoLogado && p.tecnico === tecnicoLogado) {
+          const itensStr = (p.itens||[]).slice(0,3).map(it=>`${it.nome} ×${it.qty}`).join(', ');
+          mostrarInAppNotif('separado',
+            `✅ Pedido ${p.id} separado!`,
+            `Dirija-se ao estoque para retirar. ${itensStr}`
+          );
+          dispararPushNotif(
+            `✅ Pedido ${p.id} pronto para retirada!`,
+            `Dirija-se ao estoque. Itens: ${itensStr}`
+          );
+        }
+      }
+      statusAnteriores[p._docId] = p.status;
+    }
+  });
 }
 
 renderItems();

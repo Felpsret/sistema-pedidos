@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Sistema de Pedidos de Material</title>
+<title>VIU Internet - Pedidos de Material</title>
+<link rel="icon" type="image/x-icon" href="favicon_viu.ico">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -797,7 +798,29 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
 <!-- In-app notifications container -->
 <div class="inapp-notif-overlay" id="inapp-notif-overlay"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js">
+// Melhoria adicionada: som ao receber pedido separado
+try{
+  const _oldMostrarInAppNotif = window.mostrarInAppNotif;
+  window.mostrarInAppNotif = function(tipo,titulo,msg){
+    const r = _oldMostrarInAppNotif ? _oldMostrarInAppNotif(tipo,titulo,msg) : undefined;
+    if(tipo === 'separado'){
+      try{
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.frequency.value = 880;
+        gain.gain.value = 0.05;
+        osc.start();
+        osc.stop(ctx.currentTime + 0.2);
+      }catch(e){}
+    }
+    return r;
+  };
+}catch(e){}
+
+</script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
 import {

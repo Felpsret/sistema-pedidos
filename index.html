@@ -1290,15 +1290,31 @@ function renderMeusPedidos() {
     html += sortedAtivos.map(renderCard).join('');
   }
 
-  // Seção de histórico (retirados)
+  // Seção de histórico (retirados) — mostra só os 5 mais recentes, com "Ver mais"
+  const HIST_PAGE = 5;
   if (retirados.length > 0) {
+    const retiradosOrdenados = [...retirados].sort((a,b) => {
+      const da = a.criadoEm?.seconds||0, db2 = b.criadoEm?.seconds||0;
+      return db2 - da;
+    });
+    const visiveis = retiradosOrdenados.slice(0, HIST_PAGE);
+    const restantes = retiradosOrdenados.slice(HIST_PAGE);
+    const cardsVisiveis = visiveis.map(renderCard).join('');
+    const cardsRestantes = restantes.length > 0
+      ? `<div id="historico-extra" style="display:none;flex-direction:column;gap:8px">${restantes.map(renderCard).join('')}</div>
+         <button id="historico-ver-mais-btn" onclick="toggleHistoricoExtra(this)" style="margin-top:6px;width:100%;padding:8px;background:var(--bg);border:0.5px solid var(--border-md);border-radius:var(--radius);font-size:13px;color:var(--brand-dark);cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:6px">
+           <i class="ti ti-chevrons-down"></i> Ver mais ${restantes.length} pedido${restantes.length>1?'s':''} antigo${restantes.length>1?'s':''}
+         </button>`
+      : '';
+
     html += `<div style="margin-top:1.25rem">
       <button onclick="toggleHistorico(this)" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--brand-light);border:0.5px solid var(--brand-mid);border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;color:var(--brand-dark);font-family:var(--font)">
         <span><i class="ti ti-history" style="margin-right:6px"></i>Histórico de retiradas</span>
         <span style="display:flex;align-items:center;gap:8px"><span style="background:var(--brand-mid);color:var(--brand-darker);border-radius:99px;padding:1px 9px;font-size:12px">${retirados.length}</span><i class="ti ti-chevron-down" style="transition:transform .2s"></i></span>
       </button>
-      <div class="historico-ret-list" style="display:none;margin-top:8px;display:flex;flex-direction:column;gap:8px">
-        ${retirados.map(renderCard).join('')}
+      <div class="historico-ret-list" style="display:none;margin-top:8px;flex-direction:column;gap:8px">
+        ${cardsVisiveis}
+        ${cardsRestantes}
       </div>
     </div>`;
   }
@@ -1312,11 +1328,26 @@ window.renderMeusPedidos = renderMeusPedidos;
 window.toggleHistorico = function(btn) {
   const list = btn.nextElementSibling;
   const chevron = btn.querySelector('.ti-chevron-down');
-  const isOpen = list.style.display !== 'none';
+  const isOpen = list.style.display !== 'none' && list.style.display !== '';
   list.style.display = isOpen ? 'none' : 'flex';
   list.style.flexDirection = 'column';
   list.style.gap = '8px';
   if (chevron) chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+};
+
+window.toggleHistoricoExtra = function(btn) {
+  const extra = document.getElementById('historico-extra');
+  if (!extra) return;
+  const isOpen = extra.style.display !== 'none' && extra.style.display !== '';
+  if (isOpen) {
+    extra.style.display = 'none';
+    btn.innerHTML = `<i class="ti ti-chevrons-down"></i> Ver mais pedidos antigos`;
+  } else {
+    extra.style.display = 'flex';
+    extra.style.flexDirection = 'column';
+    extra.style.gap = '8px';
+    btn.innerHTML = `<i class="ti ti-chevrons-up"></i> Recolher`;
+  }
 };
 
 window.cancelarMeuPedido = async function(docId, pedidoId) {
@@ -1426,14 +1457,14 @@ window.salvarEdicaoPedido = async function() {
 function renderCatalogChips() {
   const searchEl = document.getElementById('cat-search-novo');
   const q = searchEl ? searchEl.value.toLowerCase().trim() : '';
-  const filtered = q ? catalogo.filter(m => m.nome.toLowerCase().includes(q) || (m.categoria||'').toLowerCase().includes(q)) : catalogo;
-  document.getElementById('mat-grid').innerHTML = filtered.map(m =>
+  const grid = document.getElementById('mat-grid');
+  if (!q) { grid.innerHTML = ''; return; }
+  const filtered = catalogo.filter(m => m.nome.toLowerCase().includes(q) || (m.categoria||'').toLowerCase().includes(q));
+  grid.innerHTML = filtered.map(m =>
     `<button class="mat-chip" onclick="addItemFromCat('${m.id}', this)">
       <i class="ti ti-package" aria-hidden="true" style="font-size:13px;opacity:.5"></i>${m.nome}
     </button>`
-  ).join('') || (q
-    ? `<span style="font-size:13px;color:var(--text-muted)">Nenhum material encontrado para "<strong>${q}</strong>".</span>`
-    : `<span style="font-size:13px;color:var(--text-muted)">Catálogo vazio. Adicione materiais na aba Catálogo.</span>`);
+  ).join('') || `<span style="font-size:13px;color:var(--text-muted)">Nenhum resultado para "<strong>${q}</strong>".</span>`;
 }
 
 window.addItemFromCat = function(id, btnEl) {
@@ -1514,6 +1545,10 @@ window.confirmQtyPopover = function() {
   if (ex) ex.qty += qty; else itensPedido.push({ nome, qty });
   closeQtyPopover();
   renderItems();
+  // Limpa a busca e os chips após adicionar
+  const searchEl = document.getElementById('cat-search-novo');
+  if (searchEl) { searchEl.value = ''; searchEl.focus(); }
+  document.getElementById('mat-grid').innerHTML = '';
   toast(`${nome} adicionado (×${qty})`, 'green');
 };
 
@@ -1915,11 +1950,22 @@ function renderKanban() {
     { key:'separado',     label:'Separado',      icon:'ti-check' },
     { key:'retirado',     label:'Retirado',      icon:'ti-package-export' }
   ];
+  const KANBAN_RET_LIMIT = 5;
   document.getElementById('kanban-board').innerHTML = cols.map(col => {
     const items = pedidos.filter(p=>p.status===col.key);
     let cards = '';
     if (!items.length) {
       cards = `<div class="kanban-empty"><i class="ti ${col.icon}" aria-hidden="true"></i>Nenhum pedido</div>`;
+    } else if (col.key === 'retirado' && items.length > KANBAN_RET_LIMIT) {
+      // Ordena mais recentes primeiro
+      const sorted = [...items].sort((a,b)=>(b.criadoEm?.seconds||0)-(a.criadoEm?.seconds||0));
+      const visiveis = sorted.slice(0, KANBAN_RET_LIMIT);
+      const extras = sorted.slice(KANBAN_RET_LIMIT);
+      cards = visiveis.map(kanbanCard).join('');
+      cards += `<div id="kanban-ret-extra" style="display:none;flex-direction:column;gap:8px">${extras.map(kanbanCard).join('')}</div>`;
+      cards += `<button id="kanban-ret-mais-btn" onclick="toggleKanbanRetExtra(this)" style="margin-top:4px;width:100%;padding:7px;background:var(--bg);border:0.5px solid var(--border-md);border-radius:var(--radius);font-size:12px;color:var(--brand-dark);cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:5px">
+        <i class="ti ti-chevrons-down"></i> Ver mais ${extras.length} retirado${extras.length>1?'s':''}
+      </button>`;
     } else {
       cards = items.map(kanbanCard).join('');
     }
@@ -1932,6 +1978,21 @@ function renderKanban() {
     </div>`;
   }).join('');
 }
+
+window.toggleKanbanRetExtra = function(btn) {
+  const extra = document.getElementById('kanban-ret-extra');
+  if (!extra) return;
+  const isOpen = extra.style.display !== 'none' && extra.style.display !== '';
+  if (isOpen) {
+    extra.style.display = 'none';
+    btn.innerHTML = `<i class="ti ti-chevrons-down"></i> Ver mais retirados`;
+  } else {
+    extra.style.display = 'flex';
+    extra.style.flexDirection = 'column';
+    extra.style.gap = '8px';
+    btn.innerHTML = `<i class="ti ti-chevrons-up"></i> Recolher`;
+  }
+};
 
 /* ─── Firebase listeners ───────────────────────── */
 async function init() {

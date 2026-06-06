@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>VIU Internet - Pedidos de Material</title>
-<link rel="icon" type="image/x-icon" href="favicon_viu.ico">
+<title>Sistema de Pedidos de Material</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -616,6 +615,11 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
         </select>
       </div>
       <div class="pedidos-list" id="pedidos-list"></div>
+      <div id="pedidos-pagination" style="display:none;justify-content:center;align-items:center;gap:8px;margin-top:1rem;flex-wrap:wrap">
+        <button class="btn btn-sm" id="pag-prev" style="background:var(--surface);border:0.5px solid var(--border-md);color:var(--brand-dark)" onclick="pedidosPagina(-1)"><i class="ti ti-chevron-left"></i> Anterior</button>
+        <span id="pag-info" style="font-size:13px;color:var(--text-muted);padding:0 4px"></span>
+        <button class="btn btn-sm" id="pag-next" style="background:var(--surface);border:0.5px solid var(--border-md);color:var(--brand-dark)" onclick="pedidosPagina(1)">Próxima <i class="ti ti-chevron-right"></i></button>
+      </div>
     </div>
 
   </div>
@@ -739,24 +743,44 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
 
   <!-- CATÁLOGO -->
   <div class="section" id="sec-catalogo">
-    <div class="card">
-      <div class="card-title"><i class="ti ti-plus" aria-hidden="true"></i> Adicionar material</div>
-      <div class="form-row">
-        <div>
-          <label>Nome do material</label>
-          <input type="text" id="cat-nome" placeholder="Ex: Cabo UTP Cat6" />
-        </div>
-        <div>
-          <label>Categoria</label>
-          <input type="text" id="cat-cat" placeholder="Ex: Cabos e conectores" />
-        </div>
-      </div>
-      <button class="btn btn-primary" onclick="addCatalogo()"><i class="ti ti-plus" aria-hidden="true"></i> Adicionar ao catálogo</button>
+
+    <!-- Auth wall catálogo -->
+    <div id="catalogo-auth-wall" class="card auth-wall" style="display:flex">
+      <div class="auth-wall-icon"><i class="ti ti-lock" aria-hidden="true"></i></div>
+      <div class="auth-wall-title">Acesso restrito — Catálogo</div>
+      <div class="auth-wall-sub">O gerenciamento do catálogo é exclusivo para funcionários do estoque.<br>Faça login com sua conta <strong>@viuinternet.com.br</strong> para continuar.</div>
+      <button class="btn-google" onclick="loginGoogle()">
+        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.2l6.8-6.8C35.8 2.4 30.2 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.2 17.8 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17z"/>
+          <path fill="#FBBC05" d="M10.6 28.6A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.9-4.6l-7.9-6.1A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.5 10.8l8.1-6.2z"/>
+          <path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.5-5.8c-2 1.4-4.7 2.3-7.7 2.3-6.2 0-11.5-4.2-13.4-9.8l-8.1 6.2C6.6 42.6 14.6 48 24 48z"/>
+        </svg>
+        Entrar com Google
+      </button>
     </div>
-    <div class="card">
-      <div class="card-title"><i class="ti ti-list" aria-hidden="true"></i> Materiais cadastrados</div>
-      <input type="text" id="cat-search" placeholder="🔍  Buscar por nome ou categoria..." oninput="renderCatalogo()" style="margin-bottom:12px;font-size:14px" />
-      <div id="cat-list"></div>
+
+    <!-- Conteúdo do catálogo (protegido) -->
+    <div id="catalogo-content" style="display:none">
+      <div class="card">
+        <div class="card-title"><i class="ti ti-plus" aria-hidden="true"></i> Adicionar material</div>
+        <div class="form-row">
+          <div>
+            <label>Nome do material</label>
+            <input type="text" id="cat-nome" placeholder="Ex: Cabo UTP Cat6" />
+          </div>
+          <div>
+            <label>Categoria</label>
+            <input type="text" id="cat-cat" placeholder="Ex: Cabos e conectores" />
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="addCatalogo()"><i class="ti ti-plus" aria-hidden="true"></i> Adicionar ao catálogo</button>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-list" aria-hidden="true"></i> Materiais cadastrados</div>
+        <input type="text" id="cat-search" placeholder="🔍  Buscar por nome ou categoria..." oninput="renderCatalogo()" style="margin-bottom:12px;font-size:14px" />
+        <div id="cat-list"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -798,29 +822,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
 <!-- In-app notifications container -->
 <div class="inapp-notif-overlay" id="inapp-notif-overlay"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js">
-// Melhoria adicionada: som ao receber pedido separado
-try{
-  const _oldMostrarInAppNotif = window.mostrarInAppNotif;
-  window.mostrarInAppNotif = function(tipo,titulo,msg){
-    const r = _oldMostrarInAppNotif ? _oldMostrarInAppNotif(tipo,titulo,msg) : undefined;
-    if(tipo === 'separado'){
-      try{
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain); gain.connect(ctx.destination);
-        osc.frequency.value = 880;
-        gain.gain.value = 0.05;
-        osc.start();
-        osc.stop(ctx.currentTime + 0.2);
-      }catch(e){}
-    }
-    return r;
-  };
-}catch(e){}
-
-</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
 import {
@@ -881,6 +883,7 @@ window.showSection = function(s) {
     renderMeusPedidos();
   }
   if (s==='pedidos') {
+    paginaAtual = 1;
     const user = auth.currentUser;
     if (user && user.email.endsWith('@viuinternet.com.br')) {
       document.getElementById('pedidos-auth-wall').style.display = 'none';
@@ -891,7 +894,17 @@ window.showSection = function(s) {
       document.getElementById('pedidos-content').style.display = 'none';
     }
   }
-  if (s==='catalogo') renderCatalogo();
+  if (s==='catalogo') {
+    const user = auth.currentUser;
+    if (user && user.email.endsWith('@viuinternet.com.br')) {
+      document.getElementById('catalogo-auth-wall').style.display = 'none';
+      document.getElementById('catalogo-content').style.display = 'block';
+      renderCatalogo();
+    } else {
+      document.getElementById('catalogo-auth-wall').style.display = 'flex';
+      document.getElementById('catalogo-content').style.display = 'none';
+    }
+  }
   if (s==='novo') {
     renderCatalogChips();
     // Se não há técnico logado, mostra overlay de login
@@ -929,6 +942,11 @@ window.loginGoogle = async function() {
       document.getElementById('pedidos-content').style.display = 'block';
       renderStats(); renderPedidos();
     }
+    if (document.getElementById('sec-catalogo').classList.contains('active')) {
+      document.getElementById('catalogo-auth-wall').style.display = 'none';
+      document.getElementById('catalogo-content').style.display = 'block';
+      renderCatalogo();
+    }
     verificarBannerNotif('estoque');
     toast('Bem-vindo, ' + result.user.displayName + '!', 'green');
   } catch(e) {
@@ -942,6 +960,8 @@ window.logoutGoogle = async function() {
   document.getElementById('estoque-content').style.display = 'none';
   document.getElementById('pedidos-auth-wall').style.display = 'flex';
   document.getElementById('pedidos-content').style.display = 'none';
+  document.getElementById('catalogo-auth-wall').style.display = 'flex';
+  document.getElementById('catalogo-content').style.display = 'none';
   toast('Sessão encerrada.', 'blue');
 };
 
@@ -1201,6 +1221,8 @@ function renderMeusPedidos() {
   if (lbl) lbl.textContent = tecnicoLogado;
 
   const meus = pedidos.filter(p => p.tecnico === tecnicoLogado && p.status !== 'cancelado');
+  const ativos = meus.filter(p => p.status !== 'retirado');
+  const retirados = meus.filter(p => p.status === 'retirado');
   const prontos = meus.filter(p => p.status === 'separado');
 
   // Banner de notificação
@@ -1222,19 +1244,26 @@ function renderMeusPedidos() {
     return;
   }
 
-  // Ordena: separado primeiro, depois em_separacao, depois pendente, depois retirado
-  const ordem = { separado:0, em_separacao:1, pendente:2, retirado:3 };
-  const sorted = [...meus].sort((a,b) => (ordem[a.status]??9) - (ordem[b.status]??9));
+  // Ordena ativos: separado primeiro, depois em_separacao, depois pendente
+  const ordemAtivo = { separado:0, em_separacao:1, pendente:2 };
+  const sortedAtivos = [...ativos].sort((a,b) => (ordemAtivo[a.status]??9) - (ordemAtivo[b.status]??9));
 
-  el.innerHTML = sorted.map(p => {
+  function renderCard(p) {
     let banner = '';
     if (p.status === 'separado') {
       banner = `<div class="meu-pedido-pronto-banner"><i class="ti ti-bell-ringing" style="font-size:15px;flex-shrink:0"></i> Pronto para retirada! Dirija-se ao estoque.</div>`;
     } else if (p.status === 'em_separacao') {
       banner = `<div class="meu-pedido-em-sep-banner"><i class="ti ti-loader" style="font-size:15px;flex-shrink:0"></i> Em separação — aguarde, logo estará pronto.</div>`;
+    } else if (p.status === 'retirado') {
+      banner = `<div style="background:var(--green-light);border-radius:var(--radius);padding:7px 12px;margin-bottom:10px;display:flex;align-items:center;gap:8px;color:var(--green);font-size:13px;font-weight:500"><i class="ti ti-circle-check" style="font-size:15px;flex-shrink:0"></i> Retirado em ${p.dataRetirada||'—'}</div>`;
     }
     const sepInfo = p.separadoPor ? `<div style="font-size:12px;color:var(--text-muted);margin-top:3px"><i class="ti ti-user" style="font-size:11px;margin-right:3px"></i>Separado por <strong style="color:var(--brand-dark)">${p.separadoPor}</strong></div>` : '';
-    const retInfo = p.retiradoPor ? `<div style="font-size:12px;color:var(--text-muted);margin-top:2px"><i class="ti ti-package-export" style="font-size:11px;margin-right:3px"></i>Retirado em ${p.dataRetirada}</div>` : '';
+    const retInfo = p.retiradoPor ? `<div style="font-size:12px;color:var(--text-muted);margin-top:2px"><i class="ti ti-package-export" style="font-size:11px;margin-right:3px"></i>Retirado por <strong style="color:var(--brand-dark)">${p.retiradoPor}</strong></div>` : '';
+    const acoes = p.status === 'pendente' ? `
+      <div style="margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-sm" style="background:var(--brand-light);color:var(--brand-dark);border:0.5px solid var(--brand-mid)" onclick="editarPedido('${p._docId}')"><i class="ti ti-edit"></i> Editar pedido</button>
+        <button class="btn btn-sm" style="background:var(--red-bg);color:var(--red-text);border:0.5px solid var(--red-text);opacity:.8" onclick="cancelarMeuPedido('${p._docId}','${p.id}')"><i class="ti ti-x"></i> Cancelar pedido</button>
+      </div>` : '';
     return `<div class="meu-pedido-card status-${p.status}">
       ${banner}
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
@@ -1247,10 +1276,148 @@ function renderMeusPedidos() {
       </div>
       <div class="pedido-mats">${(p.itens||[]).map(it=>`<span class="mat-tag">${it.nome} × ${it.qty}</span>`).join('')}</div>
       ${p.obs?`<div class="pedido-obs"><i class="ti ti-notes" style="font-size:12px;margin-right:4px"></i>${p.obs}</div>`:''}
+      ${acoes}
     </div>`;
-  }).join('');
+  }
+
+  let html = '';
+  if (!sortedAtivos.length) {
+    html += `<div class="empty" style="padding:1.5rem 0"><i class="ti ti-inbox" style="font-size:30px;display:block;margin-bottom:8px;opacity:.3"></i>Nenhum pedido ativo.</div>`;
+  } else {
+    html += sortedAtivos.map(renderCard).join('');
+  }
+
+  // Seção de histórico (retirados)
+  if (retirados.length > 0) {
+    html += `<div style="margin-top:1.25rem">
+      <button onclick="toggleHistorico(this)" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--brand-light);border:0.5px solid var(--brand-mid);border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;color:var(--brand-dark);font-family:var(--font)">
+        <span><i class="ti ti-history" style="margin-right:6px"></i>Histórico de retiradas</span>
+        <span style="display:flex;align-items:center;gap:8px"><span style="background:var(--brand-mid);color:var(--brand-darker);border-radius:99px;padding:1px 9px;font-size:12px">${retirados.length}</span><i class="ti ti-chevron-down" style="transition:transform .2s"></i></span>
+      </button>
+      <div class="historico-ret-list" style="display:none;margin-top:8px;display:flex;flex-direction:column;gap:8px">
+        ${retirados.map(renderCard).join('')}
+      </div>
+    </div>`;
+  }
+
+  el.innerHTML = html;
+  // Garante que o histórico começa colapsado
+  el.querySelectorAll('.historico-ret-list').forEach(hl => { hl.style.display = 'none'; });
 }
 window.renderMeusPedidos = renderMeusPedidos;
+
+window.toggleHistorico = function(btn) {
+  const list = btn.nextElementSibling;
+  const chevron = btn.querySelector('.ti-chevron-down');
+  const isOpen = list.style.display !== 'none';
+  list.style.display = isOpen ? 'none' : 'flex';
+  list.style.flexDirection = 'column';
+  list.style.gap = '8px';
+  if (chevron) chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+};
+
+window.cancelarMeuPedido = async function(docId, pedidoId) {
+  if (!confirm(`Cancelar o pedido ${pedidoId}?\nEsta ação não pode ser desfeita.`)) return;
+  try {
+    await updateDoc(doc(db,'pedidos',docId), { status:'cancelado' });
+    toast('Pedido cancelado.','red');
+  } catch(e) { toast('Erro: '+e.message,'red'); }
+};
+
+// ── Edição de pedido pendente pelo técnico ─────────
+let editandoPedidoId = null;
+let itensPedidoEdit = [];
+
+window.editarPedido = function(docId) {
+  const p = pedidos.find(x => x._docId === docId);
+  if (!p || p.status !== 'pendente') return;
+  editandoPedidoId = docId;
+  itensPedidoEdit = p.itens ? p.itens.map(i => ({...i})) : [];
+
+  const overlay = document.createElement('div');
+  overlay.id = 'edit-pedido-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(4,44,83,0.55);z-index:2000;display:flex;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(2px)';
+  overlay.innerHTML = `
+    <div style="background:var(--surface);border-radius:var(--radius-lg);border:0.5px solid var(--border-md);box-shadow:0 8px 40px rgba(4,44,83,.22);width:100%;max-width:520px;max-height:90vh;overflow-y:auto;animation:modal-in .18s ease">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:0.5px solid var(--border)">
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono)">${p.id}</div>
+          <div style="font-size:17px;font-weight:600;color:var(--brand-dark)">Editar pedido</div>
+        </div>
+        <button onclick="fecharEditPedido()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:20px;padding:2px"><i class="ti ti-x"></i></button>
+      </div>
+      <div style="padding:1.1rem 1.25rem;display:flex;flex-direction:column;gap:1rem">
+        <div>
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:8px"><i class="ti ti-package"></i> Materiais</div>
+          <div id="edit-items-list" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
+          <div style="display:flex;gap:8px;margin-top:6px">
+            <input type="text" id="edit-mat-manual" placeholder="Adicionar material..." style="flex:1;padding:8px 10px;border:0.5px solid var(--border-md);border-radius:var(--radius);font-size:14px;font-family:var(--font)" />
+            <input type="number" id="edit-mat-qty" value="1" min="1" style="width:70px;padding:8px 10px;border:0.5px solid var(--border-md);border-radius:var(--radius);font-size:14px;font-family:var(--font)" />
+            <button class="btn btn-primary btn-sm" onclick="editAddItem()"><i class="ti ti-plus"></i></button>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:6px"><i class="ti ti-notes"></i> Observação</div>
+          <textarea id="edit-obs" style="width:100%;padding:8px 10px;border:0.5px solid var(--border-md);border-radius:var(--radius);font-size:14px;font-family:var(--font);resize:vertical;min-height:68px">${p.obs||''}</textarea>
+        </div>
+      </div>
+      <div style="padding:.9rem 1.25rem;border-top:0.5px solid var(--border);display:flex;justify-content:flex-end;gap:8px">
+        <button class="btn btn-sm" style="background:var(--bg);color:var(--text-muted);border:0.5px solid var(--border-md)" onclick="fecharEditPedido()">Cancelar</button>
+        <button class="btn btn-primary btn-sm" onclick="salvarEdicaoPedido()"><i class="ti ti-check"></i> Salvar alterações</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  renderEditItems();
+};
+
+function renderEditItems() {
+  const el = document.getElementById('edit-items-list');
+  if (!el) return;
+  if (!itensPedidoEdit.length) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--text-muted);padding:6px 0">Nenhum material. Adicione abaixo.</div>';
+    return;
+  }
+  el.innerHTML = itensPedidoEdit.map((it,i) =>
+    `<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg);border-radius:var(--radius);border:0.5px solid var(--border)">
+      <span style="flex:1;font-size:14px">${it.nome}</span>
+      <input type="number" value="${it.qty}" min="1" style="width:60px;padding:5px 8px;border:0.5px solid var(--border-md);border-radius:var(--radius);font-size:14px;text-align:center;font-family:var(--font)"
+        onchange="editSetQty(${i},this.value)" />
+      <button onclick="editRemoveItem(${i})" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:16px;padding:2px;display:flex"><i class="ti ti-x"></i></button>
+    </div>`
+  ).join('');
+}
+
+window.editAddItem = function() {
+  const n = document.getElementById('edit-mat-manual').value.trim();
+  const q = parseInt(document.getElementById('edit-mat-qty').value)||1;
+  if (!n) return;
+  const ex = itensPedidoEdit.find(x => x.nome.toLowerCase()===n.toLowerCase());
+  if (ex) ex.qty+=q; else itensPedidoEdit.push({nome:n,qty:q});
+  document.getElementById('edit-mat-manual').value='';
+  document.getElementById('edit-mat-qty').value=1;
+  renderEditItems();
+};
+
+window.editSetQty = function(i, val) { itensPedidoEdit[i].qty = Math.max(1,parseInt(val)||1); };
+window.editRemoveItem = function(i) { itensPedidoEdit.splice(i,1); renderEditItems(); };
+
+window.fecharEditPedido = function() {
+  const ov = document.getElementById('edit-pedido-overlay');
+  if (ov) ov.remove();
+  editandoPedidoId = null;
+  itensPedidoEdit = [];
+};
+
+window.salvarEdicaoPedido = async function() {
+  if (!editandoPedidoId) return;
+  if (!itensPedidoEdit.length) { toast('Adicione ao menos um material.','red'); return; }
+  const obs = document.getElementById('edit-obs').value.trim();
+  try {
+    await updateDoc(doc(db,'pedidos',editandoPedidoId), { itens:[...itensPedidoEdit], obs });
+    toast('Pedido atualizado!','green');
+    fecharEditPedido();
+  } catch(e) { toast('Erro: '+e.message,'red'); }
+};
 
 
 function renderCatalogChips() {
@@ -1473,10 +1640,23 @@ function renderStats() {
   `;
 }
 
+const PEDIDOS_POR_PAGINA = 20;
+let paginaAtual = 1;
+
+window.pedidosPagina = function(delta) {
+  paginaAtual += delta;
+  renderPedidos();
+};
+
 function renderPedidos() {
   const ft = document.getElementById('filtro-tecnico').value.toLowerCase();
   const fs = document.getElementById('filtro-status').value;
   const fd = document.getElementById('filtro-data').value;
+  // Reset page when filters change
+  if (renderPedidos._lastFt !== ft || renderPedidos._lastFs !== fs || renderPedidos._lastFd !== fd) {
+    paginaAtual = 1;
+    renderPedidos._lastFt = ft; renderPedidos._lastFs = fs; renderPedidos._lastFd = fd;
+  }
 
   const now = new Date();
   const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -1485,7 +1665,6 @@ function renderPedidos() {
 
   function parsePtBR(str) {
     if (!str) return null;
-    // "dd/mm/yyyy, HH:MM:SS" or "dd/mm/yyyy HH:MM:SS"
     const m = str.match(/(\d{2})\/(\d{2})\/(\d{4})/);
     if (!m) return null;
     return new Date(+m[3], +m[2]-1, +m[1]);
@@ -1503,9 +1682,22 @@ function renderPedidos() {
     }
     return true;
   });
+
   const el = document.getElementById('pedidos-list');
-  if (!lista.length) { el.innerHTML=`<div class="empty"><i class="ti ti-inbox" aria-hidden="true"></i>Nenhum pedido encontrado.</div>`; return; }
-  el.innerHTML = lista.map(p => {
+  const pagEl = document.getElementById('pedidos-pagination');
+  const totalPags = Math.max(1, Math.ceil(lista.length / PEDIDOS_POR_PAGINA));
+  paginaAtual = Math.min(Math.max(1, paginaAtual), totalPags);
+
+  if (!lista.length) {
+    el.innerHTML=`<div class="empty"><i class="ti ti-inbox" aria-hidden="true"></i>Nenhum pedido encontrado.</div>`;
+    pagEl.style.display = 'none';
+    return;
+  }
+
+  const inicio = (paginaAtual - 1) * PEDIDOS_POR_PAGINA;
+  const pagina = lista.slice(inicio, inicio + PEDIDOS_POR_PAGINA);
+
+  el.innerHTML = pagina.map(p => {
     let extra='';
     if (p.separadoPor) extra+=`<div style="font-size:12px;color:var(--text-muted);margin-top:3px"><i class="ti ti-user" aria-hidden="true" style="font-size:12px;margin-right:3px"></i>Separado por <strong style="color:var(--brand-dark)">${p.separadoPor}</strong></div>`;
     if (p.retiradoPor) extra+=`<div style="font-size:12px;color:var(--text-muted);margin-top:2px"><i class="ti ti-package-export" aria-hidden="true" style="font-size:12px;margin-right:3px"></i>Retirado por <strong style="color:var(--brand-dark)">${p.retiradoPor}</strong> em ${p.dataRetirada}</div>`;
@@ -1518,6 +1710,18 @@ function renderPedidos() {
       ${p.obs?`<div class="pedido-obs"><i class="ti ti-notes" aria-hidden="true" style="font-size:12px;margin-right:4px"></i>${p.obs}</div>`:''}
     </div>`;
   }).join('');
+
+  // Pagination controls
+  if (lista.length > PEDIDOS_POR_PAGINA) {
+    pagEl.style.display = 'flex';
+    document.getElementById('pag-info').textContent = `Página ${paginaAtual} de ${totalPags} (${lista.length} pedidos)`;
+    document.getElementById('pag-prev').disabled = paginaAtual <= 1;
+    document.getElementById('pag-next').disabled = paginaAtual >= totalPags;
+    document.getElementById('pag-prev').style.opacity = paginaAtual <= 1 ? '.4' : '1';
+    document.getElementById('pag-next').style.opacity = paginaAtual >= totalPags ? '.4' : '1';
+  } else {
+    pagEl.style.display = 'none';
+  }
 }
 
 /* ─── Kanban ───────────────────────────────────── */
@@ -1545,6 +1749,15 @@ window.marcarSeparado = async function(docId) {
 
 window.confirmarRetirada = async function(docId) {
   const nome = getNomeEstoque(); if (!nome) return;
+  const pedido = pedidos.find(p => p._docId === docId);
+  if (!pedido) return;
+  const msg = `Confirmar retirada do pedido ${pedido.id}?\n\nTécnico: ${pedido.tecnico}\n\nDigite o código do técnico para confirmar:`;
+  const tecConfirm = window.prompt(msg);
+  if (tecConfirm === null) return; // cancelou
+  if (tecConfirm.trim().toUpperCase() !== pedido.tecnico.trim().toUpperCase()) {
+    toast('Código do técnico incorreto. Retirada não confirmada.', 'red');
+    return;
+  }
   try {
     await updateDoc(doc(db,'pedidos',docId), {
       status:'retirado',

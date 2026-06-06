@@ -129,7 +129,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
 
 /* ── KANBAN ───────────────────────────────────────────── */
 .kanban-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 10px; }
-.kanban-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; align-items: start; }
+.kanban-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; align-items: start; }
 .kanban-col { background: var(--surface); border: 0.5px solid var(--border-md); border-radius: var(--radius-lg); overflow: hidden; }
 .kanban-col-header { padding: .75rem 1rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 0.5px solid var(--border-md); }
 .kanban-col-title { font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: .05em; display: flex; align-items: center; gap: 8px; }
@@ -240,6 +240,9 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
   .stats-grid { grid-template-columns: repeat(2,1fr); }
   .form-row { grid-template-columns: 1fr; }
   .kanban-board { grid-template-columns: 1fr; }
+}
+@media (min-width: 701px) and (max-width: 1000px) {
+  .kanban-board { grid-template-columns: repeat(2, 1fr); }
 }
  /* ── Login Google ─────────────────────────────────── */
 .auth-wall { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:340px; gap:20px; }
@@ -1611,20 +1614,66 @@ window.enviarPedido = async function() {
   if (!itensPedido.length) { toast('Adicione ao menos um material.','red'); return; }
   const obs = document.getElementById('obs').value.trim();
   const id = 'PD' + Date.now().toString(36).toUpperCase().slice(-6);
+  const itensCopia = [...itensPedido];
   try {
     await addDoc(collection(db,'pedidos'), {
-      id, tecnico:nome, itens:[...itensPedido], obs,
+      id, tecnico:nome, itens:itensCopia, obs,
       status:'pendente',
       data: new Date().toLocaleString('pt-BR'),
       criadoEm: serverTimestamp(),
-      separadoPor:null, dataRetirada:null, retiradoPor:null
+      separadoPor:null, separadoEm:null, dataRetirada:null, retiradoPor:null, retiradoEm:null
     });
     itensPedido=[];
     document.getElementById('obs').value='';
     renderItems();
-    toast('Pedido '+id+' enviado!','green');
     if (tecnicoLogado) checkPedidosProntos(tecnicoLogado);
+    // Feedback visual e redirecionamento para Meus Pedidos
+    mostrarSucessoPedido(id, itensCopia);
   } catch(e) { toast('Erro: '+e.message,'red'); }
+};
+
+function mostrarSucessoPedido(id, itens) {
+  // Cria overlay de sucesso
+  const ov = document.createElement('div');
+  ov.id = 'sucesso-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(4,44,83,0.55);z-index:3000;display:flex;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(2px);animation:modal-in .2s ease';
+  ov.innerHTML = `
+    <div style="background:var(--surface);border-radius:var(--radius-lg);border:0.5px solid var(--border-md);box-shadow:0 8px 40px rgba(4,44,83,.22);width:100%;max-width:400px;overflow:hidden;animation:modal-in .2s ease;text-align:center">
+      <div style="background:var(--green);padding:2rem 1.5rem 1.5rem">
+        <div style="width:56px;height:56px;background:rgba(255,255,255,.18);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:28px;color:#fff">
+          <i class="ti ti-circle-check"></i>
+        </div>
+        <div style="font-size:20px;font-weight:600;color:#fff">Pedido enviado!</div>
+        <div style="font-size:13px;color:rgba(255,255,255,.8);margin-top:4px;font-family:var(--font-mono)">${id}</div>
+      </div>
+      <div style="padding:1.25rem 1.5rem">
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;line-height:1.6">
+          Você será notificado quando seu pedido estiver pronto para retirada.
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:16px">
+          ${itens.slice(0,4).map(it=>`<span style="background:var(--bg);border:0.5px solid var(--border-md);border-radius:99px;padding:3px 10px;font-size:12px;color:var(--brand-dark)">${it.nome} × ${it.qty}</span>`).join('')}
+          ${itens.length>4?`<span style="background:var(--bg);border:0.5px solid var(--border-md);border-radius:99px;padding:3px 10px;font-size:12px;color:var(--text-muted)">+${itens.length-4} mais</span>`:''}
+        </div>
+        <button onclick="fecharSucessoIrParaMeusPedidos()" class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;font-size:15px">
+          <i class="ti ti-clipboard-list"></i> Ver meus pedidos
+        </button>
+        <button onclick="fecharSucesso()" style="width:100%;margin-top:8px;background:none;border:none;font-size:13px;color:var(--text-muted);cursor:pointer;padding:6px;font-family:var(--font)">
+          Fazer novo pedido
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+}
+
+window.fecharSucessoIrParaMeusPedidos = function() {
+  const ov = document.getElementById('sucesso-overlay');
+  if (ov) ov.remove();
+  showSection('meus-pedidos');
+};
+
+window.fecharSucesso = function() {
+  const ov = document.getElementById('sucesso-overlay');
+  if (ov) ov.remove();
 };
 
 function renderStats() {
@@ -1742,26 +1791,22 @@ window.marcarEmSeparacao = async function(docId) {
 window.marcarSeparado = async function(docId) {
   const nome = getNomeEstoque(); if (!nome) return;
   try {
-    await updateDoc(doc(db,'pedidos',docId), { status:'separado', separadoPor:nome });
+    await updateDoc(doc(db,'pedidos',docId), {
+      status:'separado',
+      separadoPor: nome,
+      separadoEm: serverTimestamp()
+    });
     toast('Pedido marcado como separado!','blue');
   } catch(e) { toast('Erro: '+e.message,'red'); }
 };
 
 window.confirmarRetirada = async function(docId) {
   const nome = getNomeEstoque(); if (!nome) return;
-  const pedido = pedidos.find(p => p._docId === docId);
-  if (!pedido) return;
-  const msg = `Confirmar retirada do pedido ${pedido.id}?\n\nTécnico: ${pedido.tecnico}\n\nDigite o código do técnico para confirmar:`;
-  const tecConfirm = window.prompt(msg);
-  if (tecConfirm === null) return; // cancelou
-  if (tecConfirm.trim().toUpperCase() !== pedido.tecnico.trim().toUpperCase()) {
-    toast('Código do técnico incorreto. Retirada não confirmada.', 'red');
-    return;
-  }
   try {
     await updateDoc(doc(db,'pedidos',docId), {
       status:'retirado',
       retiradoPor: nome,
+      retiradoEm: serverTimestamp(),
       dataRetirada: new Date().toLocaleString('pt-BR')
     });
     toast('Retirada confirmada!','green');
@@ -1847,9 +1892,11 @@ function kanbanCard(p) {
     `;
   } else if (p.status==='separado') {
     actions = `<button class="btn btn-success btn-sm" onclick="confirmarRetirada('${p._docId}')"><i class="ti ti-package-export" aria-hidden="true"></i> Confirmar retirada</button>`;
+  } else if (p.status==='retirado') {
+    actions = `<button class="kanban-delete-btn" onclick="deletarRetirado('${p._docId}')"><i class="ti ti-trash" aria-hidden="true"></i> Remover</button>`;
   }
   const sepInfo = p.separadoPor ? `<div class="kanban-sep-by"><i class="ti ti-user" aria-hidden="true" style="font-size:11px;margin-right:3px"></i>Separado por <strong>${p.separadoPor}</strong></div>` : '';
-  const retInfo = p.retiradoPor ? `<div class="kanban-sep-by"><i class="ti ti-package-export" aria-hidden="true" style="font-size:11px;margin-right:3px"></i>Retirado por <strong>${p.retiradoPor}</strong></div>` : '';
+  const retInfo = p.retiradoPor ? `<div class="kanban-sep-by"><i class="ti ti-package-export" aria-hidden="true" style="font-size:11px;margin-right:3px"></i>Retirado por <strong>${p.retiradoPor}</strong>${p.dataRetirada ? ` — ${p.dataRetirada}` : ''}</div>` : '';
   return `<div class="kanban-card" onclick="abrirModal('${p._docId}')" style="cursor:pointer" title="Ver detalhes completos">
     <div class="kanban-card-id">${p.id}</div>
     <div class="kanban-card-tecnico"><i class="ti ti-user" aria-hidden="true" style="font-size:13px;opacity:.5;margin-right:4px"></i>${p.tecnico}</div>
@@ -1863,9 +1910,10 @@ function kanbanCard(p) {
 
 function renderKanban() {
   const cols = [
-    { key:'pendente', label:'Pendente', icon:'ti-clock' },
-    { key:'em_separacao', label:'Em Separação', icon:'ti-loader' },
-    { key:'separado', label:'Separado', icon:'ti-check' }
+    { key:'pendente',     label:'Pendente',     icon:'ti-clock' },
+    { key:'em_separacao', label:'Em Separação',  icon:'ti-loader' },
+    { key:'separado',     label:'Separado',      icon:'ti-check' },
+    { key:'retirado',     label:'Retirado',      icon:'ti-package-export' }
   ];
   document.getElementById('kanban-board').innerHTML = cols.map(col => {
     const items = pedidos.filter(p=>p.status===col.key);

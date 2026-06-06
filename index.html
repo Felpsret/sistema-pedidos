@@ -1466,6 +1466,7 @@ function renderCatalogChips() {
     </button>`
   ).join('') || `<span style="font-size:13px;color:var(--text-muted)">Nenhum resultado para "<strong>${q}</strong>".</span>`;
 }
+window.renderCatalogChips = renderCatalogChips;
 
 window.addItemFromCat = function(id, btnEl) {
   const m = catalogo.find(x => x.id===id);

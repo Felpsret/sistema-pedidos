@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<script>
+// Aplica o tema salvo antes da primeira pintura (evita "flash" de tela clara)
+(function() {
+  try {
+    var t = localStorage.getItem('app_theme');
+    if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  } catch(e) {}
+})();
+</script>
 <meta charset="UTF-8" />
 <meta name="application-name" content="Sistema de Pedidos" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -63,9 +72,83 @@
   --radius-lg: 12px;
   --font: 'Segoe UI', system-ui, sans-serif;
   --font-mono: 'Courier New', monospace;
+  --shadow-card: 0 1px 4px rgba(24,95,165,0.06);
+  --shadow-card-hover: 0 6px 20px rgba(24,95,165,0.12);
 }
-body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; padding: 1.5rem 1rem; }
+
+/* ── Tema escuro ──────────────────────────────────── */
+[data-theme="dark"] {
+  --brand: #3E8DE0;
+  --brand-dark: #6FB1F0;
+  --brand-darker: #245A91;
+  --brand-light: rgba(62,141,224,0.14);
+  --brand-mid: rgba(62,141,224,0.38);
+  --brand-hover: #5AA2E8;
+  --bg: #0B1622;
+  --surface: #11212F;
+  --border: rgba(150,182,214,0.12);
+  --border-md: rgba(150,182,214,0.22);
+  --text: #E8EFF7;
+  --text-muted: #8FA8C2;
+  --green: #8FD15B;
+  --green-light: rgba(99,153,34,0.22);
+  --green-mid: #75B83C;
+  --amber-bg: rgba(250,200,100,0.16);
+  --amber-text: #F0C36D;
+  --red-bg: rgba(240,138,138,0.16);
+  --red-text: #F0908F;
+  --sep-bg: rgba(62,141,224,0.16);
+  --sep-text: #8FC2F2;
+  --shadow-card: 0 1px 4px rgba(0,0,0,0.25);
+  --shadow-card-hover: 0 6px 20px rgba(0,0,0,0.35);
+}
+[data-theme="dark"] .loading-overlay { background: rgba(11,22,34,0.94); }
+[data-theme="dark"] .col-pendente .kanban-col-header { background: rgba(250,200,100,.10); }
+[data-theme="dark"] .col-em_separacao .kanban-col-header { background: rgba(124,58,237,.14); }
+[data-theme="dark"] .col-retirado .kanban-col-header { background: rgba(99,153,34,.14); }
+[data-theme="dark"] .kanban-date-sep { background: rgba(99,153,34,.18); color: #A9DE7E; border-color: rgba(99,153,34,.35); }
+[data-theme="dark"] .btn-google { background:#1c2733; color:#E8EFF7; border-color: var(--border-md); }
+[data-theme="dark"] .qty-stepper button,
+[data-theme="dark"] .qty-inline-btn { background: var(--bg); }
+
+body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; padding: 1.5rem 1rem; transition: background-color .25s ease, color .25s ease; }
 .app { max-width: 1100px; margin: 0 auto; }
+.card, input, select, textarea, .stat-card, .pedido-card, .kanban-col, .modal, .dash-kpi { transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease; }
+.card { box-shadow: var(--shadow-card); }
+.card:hover { box-shadow: var(--shadow-card-hover); }
+.btn { transition: opacity .15s, transform .12s; }
+.btn:active { transform: scale(.97); }
+
+/* ── Transição suave ao trocar de aba ─────────────── */
+.section.active { animation: section-in .25s ease; }
+@keyframes section-in { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform:none; } }
+
+/* ── Toggle de tema rápido (header) ───────────────── */
+.theme-quick-toggle { width:38px; height:38px; border-radius:50%; border:0.5px solid var(--border-md); background: var(--surface); color: var(--text-muted); display:flex; align-items:center; justify-content:center; font-size:17px; cursor:pointer; transition: all .2s ease; flex-shrink:0; }
+.theme-quick-toggle:hover { background: var(--brand-light); color: var(--brand); border-color: var(--brand-mid); transform: rotate(15deg); }
+
+/* ── Configurações: linhas com toggle ─────────────── */
+.settings-row { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:13px 0; }
+.settings-row + .settings-row { border-top: 0.5px solid var(--border); }
+.settings-row-text { display:flex; align-items:flex-start; gap:11px; }
+.settings-row-icon { width:34px; height:34px; border-radius:var(--radius); background: var(--brand-light); color: var(--brand); display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+.settings-row-text strong { display:block; font-size:14px; color: var(--text); font-weight:500; }
+.settings-row-text span { font-size:12px; color: var(--text-muted); }
+.opt-toggle { position:relative; width:46px; height:26px; border-radius:99px; background: var(--border-md); cursor:pointer; transition: background .2s ease; flex-shrink:0; border:none; padding:0; }
+.opt-toggle::after { content:''; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.25); transition: transform .2s ease; }
+.opt-toggle.on { background: var(--brand); }
+.opt-toggle.on::after { transform: translateX(20px); }
+
+/* ── Configurações: bloco bloqueado (sem permissão) ─ */
+.settings-locked { display:flex; align-items:center; gap:12px; padding:14px; background: var(--bg); border-radius: var(--radius); border: 0.5px dashed var(--border-md); color: var(--text-muted); font-size:13px; }
+.settings-locked i { font-size:22px; opacity:.5; flex-shrink:0; }
+.settings-locked .btn-google { margin-left:auto; padding:8px 16px; font-size:13px; }
+
+.about-card { display:flex; align-items:center; gap:14px; }
+.about-card-icon { width:48px; height:48px; border-radius:var(--radius-lg); background: var(--brand); color:#fff; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
+.about-card-name { font-size:16px; font-weight:600; color: var(--brand-dark); }
+.about-card-sub { font-size:12px; color: var(--text-muted); margin-top:2px; }
+.about-card-version { margin-left:auto; font-size:11px; font-weight:600; color: var(--brand-dark); background: var(--brand-light); border:0.5px solid var(--brand-mid); padding:4px 10px; border-radius:99px; white-space:nowrap; }
 
 /* Header */
 .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 0.5px solid var(--border-md); flex-wrap: wrap; gap: 12px; background: var(--surface); border-radius: var(--radius-lg); padding: 1rem 1.25rem; border: 0.5px solid var(--border-md); box-shadow: 0 1px 6px rgba(24,95,165,0.07); }
@@ -485,7 +568,11 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
       <button class="nav-btn" onclick="showSection('pedidos')" id="tab-pedidos"><i class="ti ti-list" aria-hidden="true"></i> Todos os pedidos</button>
       <button class="nav-btn" onclick="showSection('estoque')" id="tab-estoque"><i class="ti ti-layout-kanban" aria-hidden="true"></i> Estoque</button>
       <button class="nav-btn" onclick="showSection('catalogo')" id="tab-catalogo"><i class="ti ti-box" aria-hidden="true"></i> Catálogo</button>
+      <button class="nav-btn" onclick="showSection('config')" id="tab-config"><i class="ti ti-settings" aria-hidden="true"></i> Configurações</button>
     </div>
+    <button class="theme-quick-toggle" onclick="alternarTema()" id="theme-quick-toggle" title="Alternar tema claro/escuro">
+      <i class="ti ti-moon" id="theme-quick-icon" aria-hidden="true"></i>
+    </button>
   </div>
 
   <!-- NOVO PEDIDO -->
@@ -713,20 +800,6 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
         <input type="text" id="estoque-nome" placeholder="Nome do funcionário de estoque" />
       </div>
     </div>
-    <div class="card" style="margin-bottom:1rem">
-      <div class="card-title"><i class="ti ti-hard-hat" aria-hidden="true"></i> Gerenciar Técnicos</div>
-      <div style="max-width:480px">
-        <label>Cadastrar novo técnico (ex: FP_116)</label>
-        <div class="inline-add" style="margin-bottom:12px">
-          <input type="text" id="tec-novo-codigo" placeholder="Ex: FP_116" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()" />
-          <button class="btn btn-primary btn-sm" onclick="cadastrarTecnico()"><i class="ti ti-plus"></i> Adicionar</button>
-        </div>
-        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em;font-weight:500">Técnicos cadastrados</div>
-        <div class="tec-chips-wrap" id="tec-chips-wrap">
-          <span style="font-size:13px;color:var(--text-muted)">Nenhum técnico cadastrado.</span>
-        </div>
-      </div>
-    </div>
     <div class="kanban-board" id="kanban-board"></div>
 
     <!-- Dashboard dentro do Estoque -->
@@ -816,6 +889,80 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
       </div>
     </div>
   </div>
+
+  <!-- CONFIGURAÇÕES -->
+  <div class="section" id="sec-config">
+
+    <div class="card">
+      <div class="card-title"><i class="ti ti-palette" aria-hidden="true"></i> Aparência</div>
+      <div class="settings-row">
+        <div class="settings-row-text">
+          <div class="settings-row-icon"><i class="ti ti-moon"></i></div>
+          <div>
+            <strong>Modo escuro</strong>
+            <span>Reduz o brilho da tela em ambientes com pouca luz.</span>
+          </div>
+        </div>
+        <button class="opt-toggle" id="toggle-tema" onclick="alternarTema()" aria-label="Alternar modo escuro"></button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ti ti-bell" aria-hidden="true"></i> Notificações</div>
+      <div class="settings-row">
+        <div class="settings-row-text">
+          <div class="settings-row-icon"><i class="ti ti-volume"></i></div>
+          <div>
+            <strong>Som de notificação</strong>
+            <span>Toca um aviso sonoro ao receber novos pedidos ou atualizações.</span>
+          </div>
+        </div>
+        <button class="opt-toggle" id="toggle-som" onclick="alternarSom()" aria-label="Alternar som de notificação"></button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ti ti-hard-hat" aria-hidden="true"></i> Gerenciar Técnicos</div>
+      <div id="config-tecnicos-locked" class="settings-locked" style="display:none">
+        <i class="ti ti-lock"></i>
+        <span>Disponível apenas para a equipe do estoque. Faça login com sua conta <strong>@viuinternet.com.br</strong>.</span>
+        <button class="btn-google" onclick="loginGoogle()" style="padding:7px 14px;font-size:13px">
+          <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" style="width:16px;height:16px">
+            <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.2l6.8-6.8C35.8 2.4 30.2 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.2 17.8 9.5 24 9.5z"/>
+            <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17z"/>
+            <path fill="#FBBC05" d="M10.6 28.6A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.9-4.6l-7.9-6.1A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.5 10.8l8.1-6.2z"/>
+            <path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.5-5.8c-2 1.4-4.7 2.3-7.7 2.3-6.2 0-11.5-4.2-13.4-9.8l-8.1 6.2C6.6 42.6 14.6 48 24 48z"/>
+          </svg>
+          Entrar
+        </button>
+      </div>
+      <div id="config-tecnicos-wrap" style="display:none;max-width:480px">
+        <label>Cadastrar novo técnico (ex: FP_116)</label>
+        <div class="inline-add" style="margin-bottom:12px">
+          <input type="text" id="tec-novo-codigo" placeholder="Ex: FP_116" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()" />
+          <button class="btn btn-primary btn-sm" onclick="cadastrarTecnico()"><i class="ti ti-plus"></i> Adicionar</button>
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em;font-weight:500">Técnicos cadastrados</div>
+        <div class="tec-chips-wrap" id="tec-chips-wrap">
+          <span style="font-size:13px;color:var(--text-muted)">Nenhum técnico cadastrado.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ti ti-info-circle" aria-hidden="true"></i> Sobre o app</div>
+      <div class="about-card">
+        <div class="about-card-icon"><i class="ti ti-package"></i></div>
+        <div>
+          <div class="about-card-name">StockFlow</div>
+          <div class="about-card-sub">Sistema de Pedidos de Material — Viu Internet</div>
+          <div class="about-card-sub">Desenvolvido por Felipe dos Santos Garcia</div>
+        </div>
+        <span class="about-card-version">v1.1</span>
+      </div>
+    </div>
+
+  </div>
 </div>
 
 
@@ -902,10 +1049,10 @@ document.getElementById('estoque-nome').addEventListener('input', function() {
   try { localStorage.setItem('estoque_nome', this.value); } catch(e) {}
 });
 
-const subs = { novo:'Técnico — novo pedido', 'meus-pedidos':'Meus Pedidos', pedidos:'Todos os pedidos', estoque:'Kanban do estoque', catalogo:'Catálogo de materiais' };
+const subs = { novo:'Técnico — novo pedido', 'meus-pedidos':'Meus Pedidos', pedidos:'Todos os pedidos', estoque:'Kanban do estoque', catalogo:'Catálogo de materiais', config:'Configurações' };
 
 window.showSection = function(s) {
-  ['novo','meus-pedidos','pedidos','estoque','catalogo'].forEach(k => {
+  ['novo','meus-pedidos','pedidos','estoque','catalogo','config'].forEach(k => {
     const sec = document.getElementById('sec-'+k);
     const tab = document.getElementById('tab-'+k);
     if (sec) sec.classList.toggle('active', k===s);
@@ -956,6 +1103,9 @@ window.showSection = function(s) {
       document.getElementById('estoque-content').style.display = 'none';
     }
   }
+  if (s==='config') {
+    renderConfigSection();
+  }
 };
 
 /* ─── Auth Google ───────────────────────────────── */
@@ -980,6 +1130,7 @@ window.loginGoogle = async function() {
       document.getElementById('catalogo-content').style.display = 'block';
       renderCatalogo();
     }
+    if (document.getElementById('sec-config').classList.contains('active')) renderConfigSection();
     verificarBannerNotif('estoque');
     toast('Bem-vindo, ' + result.user.displayName + '!', 'green');
   } catch(e) {
@@ -995,6 +1146,7 @@ window.logoutGoogle = async function() {
   document.getElementById('pedidos-content').style.display = 'none';
   document.getElementById('catalogo-auth-wall').style.display = 'flex';
   document.getElementById('catalogo-content').style.display = 'none';
+  if (document.getElementById('sec-config').classList.contains('active')) renderConfigSection();
   toast('Sessão encerrada.', 'blue');
 };
 
@@ -1056,6 +1208,54 @@ function badgeFor(s) {
 /* ─── Técnicos cadastrados ──────────────────── */
 let tecnicos = []; // [{id, codigo}]
 let tecnicoLogado = null; // string codigo
+
+/* ─── Configurações: Tema (claro/escuro) ──────── */
+function temaAtual() {
+  return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+}
+function atualizarToggleTema() {
+  const dark = temaAtual() === 'dark';
+  const toggle = document.getElementById('toggle-tema');
+  if (toggle) toggle.classList.toggle('on', dark);
+  const icon = document.getElementById('theme-quick-icon');
+  if (icon) icon.className = 'ti ' + (dark ? 'ti-sun' : 'ti-moon');
+}
+window.alternarTema = function() {
+  const novo = temaAtual() === 'dark' ? 'light' : 'dark';
+  if (novo === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  else document.documentElement.removeAttribute('data-theme');
+  try { localStorage.setItem('app_theme', novo); } catch(e) {}
+  atualizarToggleTema();
+};
+
+/* ─── Configurações: Som de notificação ───────── */
+function somAtivado() {
+  try { return localStorage.getItem('app_som') !== 'off'; } catch(e) { return true; }
+}
+function atualizarToggleSom() {
+  const toggle = document.getElementById('toggle-som');
+  if (toggle) toggle.classList.toggle('on', somAtivado());
+}
+window.alternarSom = function() {
+  const novoAtivo = !somAtivado();
+  try { localStorage.setItem('app_som', novoAtivo ? 'on' : 'off'); } catch(e) {}
+  atualizarToggleSom();
+};
+
+/* ─── Configurações: render geral da aba ──────── */
+function renderConfigSection() {
+  atualizarToggleTema();
+  atualizarToggleSom();
+  const user = auth.currentUser;
+  const ehEstoque = user && user.email.endsWith('@viuinternet.com.br');
+  const wrap = document.getElementById('config-tecnicos-wrap');
+  const locked = document.getElementById('config-tecnicos-locked');
+  if (wrap) wrap.style.display = ehEstoque ? 'block' : 'none';
+  if (locked) locked.style.display = ehEstoque ? 'none' : 'flex';
+  if (ehEstoque) renderTecChips();
+}
+// Aplica o estado correto do toggle/ícone assim que o script carrega
+atualizarToggleTema();
 
 function renderTecSelect() {
   const sel = document.getElementById('tecnico-select');
@@ -2252,17 +2452,19 @@ function mostrarInAppNotif(tipo, titulo, msg) {
     <div class="inapp-notif-progress"></div>`;
   container.appendChild(div);
   // Som sutil
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.frequency.setValueAtTime(tipo==='novo' ? 880 : 660, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(tipo==='novo' ? 1100 : 880, ctx.currentTime + 0.12);
-    gain.gain.setValueAtTime(0.12, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
-    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.4);
-  } catch(e) {}
+  if (somAtivado()) {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.setValueAtTime(tipo==='novo' ? 880 : 660, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(tipo==='novo' ? 1100 : 880, ctx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.4);
+    } catch(e) {}
+  }
   setTimeout(() => fecharInAppNotif(id), 6000);
 }
 window.fecharInAppNotif = function(id) {

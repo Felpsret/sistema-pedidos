@@ -1,4 +1,3 @@
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
 import {
   getFirestore, collection, doc, addDoc, updateDoc, deleteDoc,
@@ -1644,4 +1643,3 @@ function verificarEventosNotif(novosPedidos) {
 }
 
 renderItems();
-

@@ -1,39 +1,61 @@
-const CACHE = 'stockflow-v1';
-const ARQUIVOS = ['/', './index.html', './style.css', './app.js'];
+const CACHE = 'stockflow-v2';
+const STATIC = ['/', './index.html', './style.css', './app.js'];
 
-// Instala e faz cache dos arquivos principais
+// Instala: pré-carrega os arquivos estáticos em cache
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(cache => cache.addAll(ARQUIVOS))
+    caches.open(CACHE).then(cache => cache.addAll(STATIC))
   );
   self.skipWaiting();
 });
 
-// Ativa e limpa caches antigos
+// Ativa: limpa caches de versões antigas
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
       Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    )
+    ).then(() => self.clients.claim())
   );
-  e.waitUntil(self.clients.claim());
 });
 
-// Network first para JS/CSS (sempre busca versão mais nova),
-// Cache fallback para não ficar em branco offline
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
-  // Só intercepta requests do mesmo origin
+
+  // Não intercepta requests externos (Firebase, CDN, etc.)
   if (url.origin !== self.location.origin) return;
 
+  // HTML: network first (garante versão mais recente sempre)
+  if (url.pathname.endsWith('.html') || url.pathname === '/') {
+    e.respondWith(
+      fetch(e.request)
+        .then(res => {
+          caches.open(CACHE).then(c => c.put(e.request, res.clone()));
+          return res;
+        })
+        .catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // CSS e JS: cache first com revalidação em background (stale-while-revalidate)
+  // Carrega instantâneo do cache, atualiza em background para próxima visita
+  if (url.pathname.endsWith('.css') || url.pathname.endsWith('.js')) {
+    e.respondWith(
+      caches.open(CACHE).then(cache =>
+        cache.match(e.request).then(cached => {
+          const fetchPromise = fetch(e.request).then(res => {
+            cache.put(e.request, res.clone());
+            return res;
+          });
+          return cached || fetchPromise;
+        })
+      )
+    );
+    return;
+  }
+
+  // Demais requests: network com fallback para cache
   e.respondWith(
-    fetch(e.request)
-      .then(res => {
-        // Atualiza cache com versão mais nova
-        const clone = res.clone();
-        caches.open(CACHE).then(cache => cache.put(e.request, clone));
-        return res;
-      })
-      .catch(() => caches.match(e.request))
+    fetch(e.request).catch(() => caches.match(e.request))
   );
 });

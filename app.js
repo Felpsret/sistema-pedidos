@@ -1,3 +1,80 @@
+// ── Utilitário debounce ──────────────────────────────────────────────────────
+function debounce(fn, ms) {
+  let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+const renderPedidosDebounced    = debounce(() => renderPedidos(), 200);
+const renderCatalogoDebounced   = debounce(() => renderCatalogo(), 200);
+const renderCatalogChipsDebounced = debounce(() => renderCatalogChips(), 200);
+const filtrarTecnicosDebounced  = debounce((v) => renderTecOptions(v), 150);
+window.renderPedidosDebounced    = renderPedidosDebounced;
+window.renderCatalogoDebounced   = renderCatalogoDebounced;
+window.renderCatalogChipsDebounced = renderCatalogChipsDebounced;
+window.filtrarTecnicosDebounced  = filtrarTecnicosDebounced;
+// ────────────────────────────────────────────────────────────────────────────
+
+
+// ── Validação visual de inputs ───────────────────────────────────────────────
+function validarCampo(id, condicao, msg) {
+  const el = document.getElementById(id);
+  if (!el) return true;
+  const erro = el.parentElement.querySelector('.input-error-msg');
+  if (!condicao) {
+    el.classList.add('input-error');
+    if (!erro) {
+      const d = document.createElement('div');
+      d.className = 'input-error-msg';
+      d.innerHTML = `<i class="ti ti-alert-circle"></i>${msg}`;
+      el.parentElement.appendChild(d);
+    }
+    el.focus();
+    return false;
+  }
+  el.classList.remove('input-error');
+  if (erro) erro.remove();
+  return true;
+}
+function limparErros(...ids) {
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('input-error');
+    const erro = el.parentElement.querySelector('.input-error-msg');
+    if (erro) erro.remove();
+  });
+}
+// ────────────────────────────────────────────────────────────────────────────
+// ── Modal de confirmação customizado ────────────────────────────────────────
+function confirmar({ titulo, msg, tipo = 'red', labelOk = 'Confirmar', icone = 'ti-alert-triangle' }) {
+  return new Promise(resolve => {
+    const overlay  = document.getElementById('confirm-overlay');
+    const iconEl   = document.getElementById('confirm-icon');
+    const titleEl  = document.getElementById('confirm-title');
+    const msgEl    = document.getElementById('confirm-msg');
+    const okBtn    = document.getElementById('confirm-ok-btn');
+    const cancelBtn = document.getElementById('confirm-cancel-btn');
+
+    iconEl.className  = `confirm-icon ${tipo}`;
+    iconEl.innerHTML  = `<i class="ti ${icone}"></i>`;
+    titleEl.textContent = titulo;
+    msgEl.innerHTML   = msg;
+    okBtn.className   = `btn confirm-ok-btn ${tipo}`;
+    okBtn.textContent = labelOk;
+    overlay.classList.add('active');
+
+    const cleanup = (val) => {
+      overlay.classList.remove('active');
+      okBtn.removeEventListener('click', onOk);
+      cancelBtn.removeEventListener('click', onCancel);
+      resolve(val);
+    };
+    const onOk     = () => cleanup(true);
+    const onCancel = () => cleanup(false);
+    okBtn.addEventListener('click', onOk);
+    cancelBtn.addEventListener('click', onCancel);
+    overlay.addEventListener('click', e => { if (e.target === overlay) cleanup(false); }, { once: true });
+  });
+}
+// ────────────────────────────────────────────────────────────────────────────
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
 import {
   getFirestore, collection, doc, addDoc, updateDoc, deleteDoc,
@@ -324,7 +401,8 @@ function renderTecChips() {
 window.cadastrarTecnico = async function() {
   const inp = document.getElementById('tec-novo-codigo');
   const codigo = inp.value.trim().toUpperCase();
-  if (!codigo) { toast('Digite o código do técnico.','red'); return; }
+  limparErros('tec-novo-codigo');
+  if (!codigo) { validarCampo('tec-novo-codigo', false, 'Digite o código do técnico.'); return; }
   if (tecnicos.find(t => t.codigo === codigo)) { toast('Técnico já cadastrado.','red'); return; }
   try {
     await addDoc(collection(db,'tecnicos'), { codigo, criadoEm: serverTimestamp() });
@@ -333,8 +411,19 @@ window.cadastrarTecnico = async function() {
   } catch(e) { toast('Erro: '+e.message,'red'); }
 };
 
+document.addEventListener('DOMContentLoaded', () => {
+  ['cat-nome','tec-novo-codigo'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => { el.classList.remove('input-error'); const e = el.parentElement.querySelector('.input-error-msg'); if(e) e.remove(); });
+  });
+});
 window.removerTecnico = async function(id, codigo) {
-  if (!confirm(`Remover técnico "${codigo}"?\nEle não conseguirá mais fazer pedidos.`)) return;
+  const ok = await confirmar({
+    titulo: 'Remover técnico',
+    msg: `Tem certeza que deseja remover <strong>${codigo}</strong>?<br>Ele não conseguirá mais fazer pedidos.`,
+    tipo: 'red', labelOk: 'Remover', icone: 'ti-user-minus'
+  });
+  if (!ok) return;
   try {
     await deleteDoc(doc(db,'tecnicos',id));
     toast('Técnico ' + codigo + ' removido.','blue');
@@ -616,7 +705,12 @@ window.toggleHistoricoExtra = function(btn) {
 };
 
 window.cancelarMeuPedido = async function(docId, pedidoId) {
-  if (!confirm(`Cancelar o pedido ${pedidoId}?\nEsta ação não pode ser desfeita.`)) return;
+  const ok = await confirmar({
+    titulo: 'Cancelar pedido',
+    msg: `Tem certeza que deseja cancelar o pedido <strong>${pedidoId}</strong>?<br>Esta ação não pode ser desfeita.`,
+    tipo: 'yellow', labelOk: 'Cancelar pedido', icone: 'ti-circle-x'
+  });
+  if (!ok) return;
   try {
     await updateDoc(doc(db,'pedidos',docId), { status:'cancelado' });
     toast('Pedido cancelado.','red');
@@ -876,9 +970,11 @@ window.removeItem = function(i) { itensPedido.splice(i,1); renderItems(); };
 window.addCatalogo = async function() {
   const nome = document.getElementById('cat-nome').value.trim();
   const cat = document.getElementById('cat-cat').value.trim();
-  if (!nome) { toast('Informe o nome do material.','red'); return; }
+  limparErros('cat-nome');
+  if (!nome) { validarCampo('cat-nome', false, 'Informe o nome do material.'); return; }
   try {
     await addDoc(collection(db,'catalogo'), { nome, categoria:cat||'Geral', criadoEm:serverTimestamp() });
+    limparErros('cat-nome');
     document.getElementById('cat-nome').value='';
     document.getElementById('cat-cat').value='';
     toast('Material adicionado!','green');
@@ -886,7 +982,12 @@ window.addCatalogo = async function() {
 };
 
 window.removeCatalogo = async function(id, nome) {
-  if (!confirm(`Remover "${nome}" do catálogo?\n\nEsta ação não pode ser desfeita.`)) return;
+  const ok = await confirmar({
+    titulo: 'Remover material',
+    msg: `Tem certeza que deseja remover <strong>${nome}</strong> do catálogo?<br>Esta ação não pode ser desfeita.`,
+    tipo: 'red', labelOk: 'Remover', icone: 'ti-trash'
+  });
+  if (!ok) return;
   try { await deleteDoc(doc(db,'catalogo',id)); toast('Material removido.','blue'); }
   catch(e) { toast('Erro ao remover.','red'); }
 };
@@ -911,8 +1012,8 @@ function renderCatalogo() {
 /* ─── Pedidos ──────────────────────────────────── */
 window.enviarPedido = async function() {
   const nome = document.getElementById('tecnico-nome').value.trim();
-  if (!nome) { toast('Informe seu nome antes de enviar.','red'); return; }
-  if (!itensPedido.length) { toast('Adicione ao menos um material.','red'); return; }
+  if (!nome) { toast('Selecione seu código antes de enviar.','red'); return; }
+  if (!itensPedido.length) { toast('Adicione ao menos um material ao pedido.','red'); return; }
   const obs = document.getElementById('obs').value.trim();
   const id = 'PD' + Date.now().toString(36).toUpperCase().slice(-6);
   const itensCopia = [...itensPedido];
@@ -1006,6 +1107,7 @@ function renderPedidos() {
   if (renderPedidos._lastFt !== ft || renderPedidos._lastFs !== fs || renderPedidos._lastFd !== fd) {
     paginaAtual = 1;
     renderPedidos._lastFt = ft; renderPedidos._lastFs = fs; renderPedidos._lastFd = fd;
+    renderPedidos._cachedLista = null; // invalida cache de filtro
   }
 
   const now = new Date();
@@ -1123,7 +1225,12 @@ window.cancelarPedido = async function(docId) {
 };
 
 window.deletarRetirado = async function(docId) {
-  if (!confirm('Tem certeza que deseja apagar este pedido retirado? Esta ação não pode ser desfeita.')) return;
+  const ok = await confirmar({
+    titulo: 'Apagar pedido',
+    msg: 'Tem certeza que deseja apagar este pedido retirado?<br>Esta ação <strong>não pode ser desfeita</strong>.',
+    tipo: 'red', labelOk: 'Apagar', icone: 'ti-trash'
+  });
+  if (!ok) return;
   try {
     await deleteDoc(doc(db,'pedidos',docId));
     toast('Pedido removido do histórico.','red');
@@ -1443,26 +1550,35 @@ function renderDashboard() {
     const key = d.toLocaleDateString('pt-BR');
     if (key in diasMap) diasMap[key]++;
   });
-  if (chartLinha) chartLinha.destroy();
-  chartLinha = new Chart(document.getElementById('chart-linha').getContext('2d'), {
-    type: 'line',
-    data: {
-      labels: Object.keys(diasMap),
-      datasets: [{ label:'Pedidos', data:Object.values(diasMap), borderColor:'#185FA5', backgroundColor:'rgba(24,95,165,0.10)', tension:0.4, fill:true, pointBackgroundColor:'#185FA5', pointRadius:4 }]
-    },
-    options: { responsive:true, plugins:{legend:{display:false}}, scales:{ x:{ticks:{font:{size:11},maxRotation:45,color:'#5a7fa8'},grid:{color:'rgba(24,95,165,0.07)'}}, y:{beginAtZero:true,ticks:{stepSize:1,color:'#5a7fa8',font:{size:11}},grid:{color:'rgba(24,95,165,0.07)'}} } }
-  });
+  if (chartLinha) {
+    chartLinha.data.labels = Object.keys(diasMap);
+    chartLinha.data.datasets[0].data = Object.values(diasMap);
+    chartLinha.update('none');
+  } else {
+    chartLinha = new Chart(document.getElementById('chart-linha').getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: Object.keys(diasMap),
+        datasets: [{ label:'Pedidos', data:Object.values(diasMap), borderColor:'#185FA5', backgroundColor:'rgba(24,95,165,0.10)', tension:0.4, fill:true, pointBackgroundColor:'#185FA5', pointRadius:4 }]
+      },
+      options: { responsive:true, plugins:{legend:{display:false}}, scales:{ x:{ticks:{font:{size:11},maxRotation:45,color:'#5a7fa8'},grid:{color:'rgba(24,95,165,0.07)'}}, y:{beginAtZero:true,ticks:{stepSize:1,color:'#5a7fa8',font:{size:11}},grid:{color:'rgba(24,95,165,0.07)'}} } }
+    });
+  }
 
   // Gráfico pizza
-  if (chartPizza) chartPizza.destroy();
   const pizzaLabels = ['Pendente','Em Separação','Separado','Retirado','Cancelado'];
   const pizzaData = [pendentes, emSep, separados, retirados, cancelados];
   const pizzaCores = ['#F5C06A','#A78BFA','#5FA8E5','#7BC64E','#E57373'];
-  chartPizza = new Chart(document.getElementById('chart-pizza').getContext('2d'), {
-    type: 'doughnut',
-    data: { labels:pizzaLabels, datasets:[{data:pizzaData, backgroundColor:pizzaCores, borderWidth:2, borderColor:'#fff'}] },
-    options: { responsive:true, cutout:'65%', plugins:{legend:{display:false}} }
-  });
+  if (chartPizza) {
+    chartPizza.data.datasets[0].data = pizzaData;
+    chartPizza.update('none');
+  } else {
+    chartPizza = new Chart(document.getElementById('chart-pizza').getContext('2d'), {
+      type: 'doughnut',
+      data: { labels:pizzaLabels, datasets:[{data:pizzaData, backgroundColor:pizzaCores, borderWidth:2, borderColor:'#fff'}] },
+      options: { responsive:true, cutout:'65%', plugins:{legend:{display:false}} }
+    });
+  }
   document.getElementById('dash-legend').innerHTML = pizzaLabels.map((l,i) =>
     `<div class="dash-legend-row"><div class="dash-legend-dot" style="background:${pizzaCores[i]}"></div><span>${l}</span><span style="margin-left:auto;font-weight:600;color:var(--brand-dark)">${pizzaData[i]}</span></div>`
   ).join('');

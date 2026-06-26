@@ -23,8 +23,8 @@
   --sep-text: #0C447C;
   --radius: 8px;
   --radius-lg: 12px;
-  --font: 'Segoe UI', system-ui, sans-serif;
-  --font-mono: 'Courier New', monospace;
+  --font: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
   --shadow-card: 0 1px 4px rgba(24,95,165,0.06);
   --shadow-card-hover: 0 6px 20px rgba(24,95,165,0.12);
 }
@@ -237,7 +237,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
 /* Modal pedido */
 .modal-overlay { position: fixed; inset: 0; background: rgba(4,44,83,0.45); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 1rem; backdrop-filter: blur(2px); }
 .modal-overlay.open { display: flex; }
-.modal { background: var(--surface); border-radius: var(--radius-lg); border: 0.5px solid var(--border-md); box-shadow: 0 8px 40px rgba(4,44,83,0.22); width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; animation: modal-in .18s ease; }
+.modal { will-change: transform, opacity; background: var(--surface); border-radius: var(--radius-lg); border: 0.5px solid var(--border-md); box-shadow: 0 8px 40px rgba(4,44,83,0.22); width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; animation: modal-in .18s ease; }
 @keyframes modal-in { from { opacity:0; transform:translateY(12px) scale(.97); } to { opacity:1; transform:none; } }
 .modal-header { display: flex; align-items: flex-start; justify-content: space-between; padding: 1.1rem 1.25rem .9rem; border-bottom: 0.5px solid var(--border); }
 .modal-id { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); margin-bottom: 3px; }
@@ -270,7 +270,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
 .empty i { font-size: 36px; display: block; margin-bottom: 10px; opacity: .3; }
 
 /* Toast */
-.toast { position: fixed; bottom: 20px; right: 20px; padding: 10px 16px; border-radius: var(--radius); font-size: 14px; font-weight: 500; display: none; z-index: 999; align-items: center; gap: 8px; box-shadow: 0 4px 20px rgba(24,95,165,.22); }
+.toast { will-change: opacity, transform; position: fixed; bottom: 20px; right: 20px; padding: 10px 16px; border-radius: var(--radius); font-size: 14px; font-weight: 500; display: none; z-index: 999; align-items: center; gap: 8px; box-shadow: 0 4px 20px rgba(24,95,165,.22); }
 .toast.show { display: flex; }
 .toast-blue { background: var(--brand); color: #fff; }
 .toast-green { background: var(--green); color: var(--green-light); }
@@ -301,7 +301,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
 
 /* Loading */
 .loading-overlay { position: fixed; inset: 0; background: rgba(237,244,252,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; gap: 14px; }
-.spinner { width: 36px; height: 36px; border: 3px solid var(--border-md); border-top-color: var(--brand); border-radius: 50%; animation: spin .7s linear infinite; }
+.spinner { will-change: transform; width: 36px; height: 36px; border: 3px solid var(--border-md); border-top-color: var(--brand); border-radius: 50%; animation: spin .7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .loading-txt { font-size: 14px; color: var(--text-muted); }
 
@@ -509,4 +509,72 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
 @keyframes notif-slide-in { from{opacity:0;transform:translateX(24px) scale(.95);} to{opacity:1;transform:none;} }
 @keyframes notif-progress { from{width:100%;} to{width:0%;} }
 @keyframes notif-slide-out { to{opacity:0;transform:translateX(24px) scale(.92);max-height:0;padding:0;margin:0;} }
+
+/* ── Modal de confirmação customizado ───────────────────────────────────── */
+.confirm-overlay {
+  position: fixed; inset: 0; background: rgba(4,44,83,0.55);
+  z-index: 4000; display: none; align-items: center; justify-content: center;
+  padding: 1rem; backdrop-filter: blur(3px);
+}
+.confirm-overlay.active { display: flex; }
+.confirm-box {
+  background: var(--surface); border-radius: var(--radius-lg);
+  border: 0.5px solid var(--border-md); box-shadow: 0 8px 40px rgba(4,44,83,0.22);
+  padding: 2rem 1.75rem; max-width: 380px; width: 100%;
+  animation: modal-in .18s ease; text-align: center;
+}
+.confirm-icon {
+  width: 52px; height: 52px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; margin: 0 auto 1rem;
+}
+.confirm-icon.red   { background: #FEE2E2; color: #DC2626; }
+.confirm-icon.yellow { background: #FEF3C7; color: #D97706; }
+.confirm-icon.blue  { background: var(--brand-light); color: var(--brand); }
+.confirm-title {
+  font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: .5rem;
+}
+.confirm-msg {
+  font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 1.5rem;
+}
+.confirm-actions { display: flex; gap: 10px; }
+.confirm-cancel-btn {
+  flex: 1; background: var(--bg); border: 0.5px solid var(--border-md);
+  color: var(--text-muted); justify-content: center;
+}
+.confirm-cancel-btn:hover { background: var(--surface); }
+.confirm-ok-btn { flex: 1; justify-content: center; }
+.confirm-ok-btn.red    { background: #DC2626; color: #fff; }
+.confirm-ok-btn.yellow { background: #D97706; color: #fff; }
+.confirm-ok-btn.blue   { background: var(--brand); color: #fff; }
+
+/* ── Validação visual de inputs ─────────────────────────────────────────── */
+input.input-error, select.input-error, textarea.input-error {
+  border-color: #DC2626 !important;
+  background: #FFF5F5;
+}
+[data-theme="dark"] input.input-error,
+[data-theme="dark"] select.input-error,
+[data-theme="dark"] textarea.input-error {
+  background: rgba(220,38,38,0.08);
+}
+.input-error-msg {
+  font-size: 11px; color: #DC2626; margin-top: 4px;
+  display: flex; align-items: center; gap: 4px;
+}
+
+/* ── Navegação mobile ───────────────────────────────────────────────────── */
+@media (max-width: 700px) {
+  .nav {
+    width: 100%; overflow-x: auto; display: flex;
+    flex-wrap: nowrap; gap: 6px; padding-bottom: 4px;
+    -ms-overflow-style: none; scrollbar-width: none;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav-btn { white-space: nowrap; flex-shrink: 0; font-size: 12px; padding: 6px 11px; }
+  .header { gap: 8px; }
+  .header-left { gap: 8px; }
+  .title { font-size: 14px; }
+  .subtitle { font-size: 11px; }
+}
 

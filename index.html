@@ -55,27 +55,31 @@
   <div class="loading-txt">Conectando ao Firebase...</div>
 </div>
 
-<div class="app">
-  <div class="header">
-    <div class="header-left">
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
       <div class="logo"><i class="ti ti-package" aria-hidden="true"></i></div>
-      <div>
-        <div class="title">Pedidos de Material <span class="sync-pill"><i class="ti ti-cloud" aria-hidden="true"></i> Firebase</span></div>
+      <div class="sidebar-brand-text">
+        <div class="title">Pedidos de Material</div>
         <div class="subtitle" id="header-sub">Provedor de Materiais</div>
       </div>
     </div>
-    <div class="nav">
+    <span class="sync-pill sidebar-sync-pill"><i class="ti ti-cloud" aria-hidden="true"></i> Firebase conectado</span>
+    <nav class="nav" id="sidebar-nav">
       <button class="nav-btn active" onclick="showSection('novo')" id="tab-novo"><i class="ti ti-plus" aria-hidden="true"></i> Novo pedido</button>
       <button class="nav-btn" onclick="showSection('meus-pedidos')" id="tab-meus-pedidos" style="display:none"><i class="ti ti-clipboard-list" aria-hidden="true"></i> Meus Pedidos <span id="tab-meus-pedidos-badge" style="display:none;background:#185FA5;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;margin-left:2px;vertical-align:middle"></span></button>
       <button class="nav-btn" onclick="showSection('pedidos')" id="tab-pedidos"><i class="ti ti-list" aria-hidden="true"></i> Todos os pedidos</button>
       <button class="nav-btn" onclick="showSection('estoque')" id="tab-estoque"><i class="ti ti-layout-kanban" aria-hidden="true"></i> Estoque</button>
       <button class="nav-btn" onclick="showSection('catalogo')" id="tab-catalogo"><i class="ti ti-box" aria-hidden="true"></i> Catálogo</button>
       <button class="nav-btn" onclick="showSection('config')" id="tab-config"><i class="ti ti-settings" aria-hidden="true"></i> Configurações</button>
-    </div>
-    <button class="theme-quick-toggle" onclick="alternarTema()" id="theme-quick-toggle" title="Alternar tema claro/escuro">
+    </nav>
+    <button class="theme-quick-toggle sidebar-theme-toggle" onclick="alternarTema()" id="theme-quick-toggle" title="Alternar tema claro/escuro">
       <i class="ti ti-moon" id="theme-quick-icon" aria-hidden="true"></i>
+      <span class="sidebar-theme-label">Alternar tema</span>
     </button>
-  </div>
+  </aside>
+
+  <main class="main-content">
 
   <!-- NOVO PEDIDO -->
   <div class="section active" id="sec-novo">
@@ -465,10 +469,8 @@
     </div>
 
   </div>
-</div>
-
-
-</div><!-- /app-wrapper -->
+  </main>
+</div><!-- /app-shell -->
 
 <!-- MODAL PEDIDO -->
 <div class="modal-overlay" id="modal-overlay" onclick="fecharModal(event)">

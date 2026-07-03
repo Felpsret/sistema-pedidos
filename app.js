@@ -912,6 +912,7 @@ function renderCatalogo() {
     </div>`
   ).join('');
 }
+window.renderCatalogo = renderCatalogo;
 
 /* ─── Pedidos ──────────────────────────────────── */
 window.enviarPedido = async function() {
@@ -1078,6 +1079,7 @@ function renderPedidos() {
     pagEl.style.display = 'none';
   }
 }
+window.renderPedidos = renderPedidos;
 
 /* ─── Kanban ───────────────────────────────────── */
 function getNomeEstoque() {

@@ -1032,7 +1032,7 @@ function renderPedidos() {
   const dataAte = parseISO(fdAte);
 
   const lista = pedidos.filter(p => {
-    if (ft && !p.tecnico.toLowerCase().includes(ft)) return false;
+    if (ft && !(p.tecnico || '').toLowerCase().includes(ft)) return false;
     if (fs && p.status !== fs) return false;
     if (dataDe || dataAte) {
       const d = parsePtBR(p.data);

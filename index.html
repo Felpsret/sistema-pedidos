@@ -248,12 +248,18 @@
           <option value="retirado">Retirado</option>
           <option value="cancelado">Cancelado</option>
         </select>
-        <select id="filtro-data" onchange="renderPedidos()" style="padding:8px 10px;font-size:14px;border-radius:var(--radius);border:0.5px solid var(--border-md);background:var(--surface);color:var(--text)">
-          <option value="">Qualquer data</option>
-          <option value="hoje">Hoje</option>
-          <option value="semana">Essa semana</option>
-          <option value="mes">Esse mês</option>
-        </select>
+      </div>
+      <div class="filter-row filter-row-data">
+        <label class="filter-data-label" for="filtro-data-de">De</label>
+        <input type="date" id="filtro-data-de" onchange="renderPedidos()" style="padding:8px 10px;font-size:14px;border-radius:var(--radius);border:0.5px solid var(--border-md);background:var(--surface);color:var(--text)" />
+        <label class="filter-data-label" for="filtro-data-ate">Até</label>
+        <input type="date" id="filtro-data-ate" onchange="renderPedidos()" style="padding:8px 10px;font-size:14px;border-radius:var(--radius);border:0.5px solid var(--border-md);background:var(--surface);color:var(--text)" />
+        <div class="filtro-data-chips">
+          <button type="button" class="filtro-data-chip" id="chip-hoje" onclick="setFiltroDataRapido('hoje')">Hoje</button>
+          <button type="button" class="filtro-data-chip" id="chip-semana" onclick="setFiltroDataRapido('semana')">Essa semana</button>
+          <button type="button" class="filtro-data-chip" id="chip-mes" onclick="setFiltroDataRapido('mes')">Esse mês</button>
+          <button type="button" class="filtro-data-chip filtro-data-chip-clear" onclick="limparFiltroData()"><i class="ti ti-x" aria-hidden="true"></i> Limpar</button>
+        </div>
       </div>
       <div class="pedidos-list" id="pedidos-list"></div>
       <div id="pedidos-pagination" style="display:none;justify-content:center;align-items:center;gap:8px;margin-top:1rem;flex-wrap:wrap">

@@ -912,6 +912,7 @@ function renderCatalogo() {
     </div>`
   ).join('');
 }
+window.renderCatalogo = renderCatalogo;
 
 /* ─── Pedidos ──────────────────────────────────── */
 window.enviarPedido = async function() {
@@ -1006,17 +1007,13 @@ window.pedidosPagina = function(delta) {
 function renderPedidos() {
   const ft = document.getElementById('filtro-tecnico').value.toLowerCase();
   const fs = document.getElementById('filtro-status').value;
-  const fd = document.getElementById('filtro-data').value;
+  const fdDe = document.getElementById('filtro-data-de').value;   // "YYYY-MM-DD" ou ""
+  const fdAte = document.getElementById('filtro-data-ate').value; // "YYYY-MM-DD" ou ""
   // Reset page when filters change
-  if (renderPedidos._lastFt !== ft || renderPedidos._lastFs !== fs || renderPedidos._lastFd !== fd) {
+  if (renderPedidos._lastFt !== ft || renderPedidos._lastFs !== fs || renderPedidos._lastFdDe !== fdDe || renderPedidos._lastFdAte !== fdAte) {
     paginaAtual = 1;
-    renderPedidos._lastFt = ft; renderPedidos._lastFs = fs; renderPedidos._lastFd = fd;
+    renderPedidos._lastFt = ft; renderPedidos._lastFs = fs; renderPedidos._lastFdDe = fdDe; renderPedidos._lastFdAte = fdAte;
   }
-
-  const now = new Date();
-  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const startOfWeek = new Date(startOfDay); startOfWeek.setDate(startOfDay.getDate() - startOfDay.getDay());
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
   function parsePtBR(str) {
     if (!str) return null;
@@ -1024,16 +1021,24 @@ function renderPedidos() {
     if (!m) return null;
     return new Date(+m[3], +m[2]-1, +m[1]);
   }
+  function parseISO(str) {
+    if (!str) return null;
+    const m = str.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if (!m) return null;
+    return new Date(+m[1], +m[2]-1, +m[3]);
+  }
+
+  const dataDe = parseISO(fdDe);
+  const dataAte = parseISO(fdAte);
 
   const lista = pedidos.filter(p => {
     if (ft && !p.tecnico.toLowerCase().includes(ft)) return false;
     if (fs && p.status !== fs) return false;
-    if (fd) {
+    if (dataDe || dataAte) {
       const d = parsePtBR(p.data);
       if (!d) return false;
-      if (fd === 'hoje' && d < startOfDay) return false;
-      if (fd === 'semana' && d < startOfWeek) return false;
-      if (fd === 'mes' && d < startOfMonth) return false;
+      if (dataDe && d < dataDe) return false;
+      if (dataAte && d > dataAte) return false;
     }
     return true;
   });
@@ -1078,6 +1083,32 @@ function renderPedidos() {
     pagEl.style.display = 'none';
   }
 }
+window.renderPedidos = renderPedidos;
+
+window.setFiltroDataRapido = function(tipo) {
+  const hoje = new Date();
+  const toISO = (d) => d.toISOString().slice(0,10);
+  let de = null, ate = null;
+  if (tipo === 'hoje') {
+    de = ate = hoje;
+  } else if (tipo === 'semana') {
+    const inicioSemana = new Date(hoje); inicioSemana.setDate(hoje.getDate() - hoje.getDay());
+    de = inicioSemana; ate = hoje;
+  } else if (tipo === 'mes') {
+    de = new Date(hoje.getFullYear(), hoje.getMonth(), 1); ate = hoje;
+  }
+  document.getElementById('filtro-data-de').value = de ? toISO(de) : '';
+  document.getElementById('filtro-data-ate').value = ate ? toISO(ate) : '';
+  document.querySelectorAll('.filtro-data-chip').forEach(b => b.classList.remove('active'));
+  document.getElementById('chip-'+tipo)?.classList.add('active');
+  renderPedidos();
+};
+window.limparFiltroData = function() {
+  document.getElementById('filtro-data-de').value = '';
+  document.getElementById('filtro-data-ate').value = '';
+  document.querySelectorAll('.filtro-data-chip').forEach(b => b.classList.remove('active'));
+  renderPedidos();
+};
 
 /* ─── Kanban ───────────────────────────────────── */
 function getNomeEstoque() {

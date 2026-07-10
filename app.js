@@ -478,7 +478,7 @@ function checkPedidosProntos(codigo) {
     if (total > 0) {
       badge.style.display = '';
       badge.textContent = total;
-      badge.style.background = prontos.length > 0 ? '#185FA5' : '#7C3AED';
+      badge.style.background = prontos.length > 0 ? '#0077C2' : '#7C3AED';
     } else {
       badge.style.display = 'none';
     }
@@ -1063,10 +1063,10 @@ function renderPedidos() {
     if (p.retiradoPor) extra+=`<div style="font-size:12px;color:var(--text-muted);margin-top:2px"><i class="ti ti-package-export" aria-hidden="true" style="font-size:12px;margin-right:3px"></i>Retirado por <strong style="color:var(--brand-dark)">${p.retiradoPor}</strong> em ${p.dataRetirada}</div>`;
     return `<div class="pedido-card">
       <div class="pedido-header">
-        <div><div class="pedido-id">${p.id}</div><div class="pedido-tecnico">${p.tecnico}</div>${extra}</div>
-        <div style="text-align:right">${badgeFor(p.status)}<div class="pedido-data" style="margin-top:4px">${p.data}</div></div>
+        <div><div class="pedido-id">${p.id||''}</div><div class="pedido-tecnico">${p.tecnico||'—'}</div>${extra}</div>
+        <div style="text-align:right">${badgeFor(p.status)}<div class="pedido-data" style="margin-top:4px">${p.data||''}</div></div>
       </div>
-      <div class="pedido-mats">${p.itens.map(it=>`<span class="mat-tag">${it.nome} × ${it.qty}</span>`).join('')}</div>
+      <div class="pedido-mats">${(p.itens||[]).map(it=>`<span class="mat-tag">${it.nome} × ${it.qty}</span>`).join('')}</div>
       ${p.obs?`<div class="pedido-obs"><i class="ti ti-notes" aria-hidden="true" style="font-size:12px;margin-right:4px"></i>${p.obs}</div>`:''}
     </div>`;
   }).join('');
@@ -1173,7 +1173,7 @@ window.abrirModal = function(docId) {
   document.getElementById('modal-tecnico').textContent = p.tecnico;
   document.getElementById('modal-badge').innerHTML = badgeFor(p.status);
   // Materiais — todos, sem limite
-  document.getElementById('modal-mats').innerHTML = p.itens.map(it =>
+  document.getElementById('modal-mats').innerHTML = (p.itens||[]).map(it =>
     `<div class="modal-mat-row">
       <span class="modal-mat-name"><i class="ti ti-package" aria-hidden="true" style="opacity:.4;font-size:13px"></i>${it.nome}</span>
       <span class="modal-mat-qty">${it.qty} un.</span>
@@ -1451,10 +1451,10 @@ function renderDashboard() {
 
   // KPIs
   const kpiData = [
-    { icon:'ti-clipboard-list', cor:'#E6F1FB', iconCor:'#185FA5', val:total, lbl:'Total de pedidos' },
+    { icon:'ti-clipboard-list', cor:'#E6F1FB', iconCor:'#0077C2', val:total, lbl:'Total de pedidos' },
     { icon:'ti-clock', cor:'#FAEEDA', iconCor:'#633806', val:pendentes, lbl:'Pendentes' },
     { icon:'ti-loader', cor:'#F3E8FF', iconCor:'#5B21B6', val:emSep, lbl:'Em Separação' },
-    { icon:'ti-check', cor:'#E6F1FB', iconCor:'#0C447C', val:separados, lbl:'Separados' },
+    { icon:'ti-check', cor:'#E6F1FB', iconCor:'#005A94', val:separados, lbl:'Separados' },
     { icon:'ti-package-export', cor:'#EAF3DE', iconCor:'#27500A', val:retirados, lbl:'Retirados' },
   ];
   document.getElementById('dash-kpis').innerHTML = kpiData.map(k => `
@@ -1484,9 +1484,9 @@ function renderDashboard() {
     type: 'line',
     data: {
       labels: Object.keys(diasMap),
-      datasets: [{ label:'Pedidos', data:Object.values(diasMap), borderColor:'#185FA5', backgroundColor:'rgba(24,95,165,0.10)', tension:0.4, fill:true, pointBackgroundColor:'#185FA5', pointRadius:4 }]
+      datasets: [{ label:'Pedidos', data:Object.values(diasMap), borderColor:'#0077C2', backgroundColor:'rgba(0,90,148,0.10)', tension:0.4, fill:true, pointBackgroundColor:'#0077C2', pointRadius:4 }]
     },
-    options: { responsive:true, plugins:{legend:{display:false}}, scales:{ x:{ticks:{font:{size:11},maxRotation:45,color:'#5a7fa8'},grid:{color:'rgba(24,95,165,0.07)'}}, y:{beginAtZero:true,ticks:{stepSize:1,color:'#5a7fa8',font:{size:11}},grid:{color:'rgba(24,95,165,0.07)'}} } }
+    options: { responsive:true, plugins:{legend:{display:false}}, scales:{ x:{ticks:{font:{size:11},maxRotation:45,color:'#5a7fa8'},grid:{color:'rgba(0,90,148,0.07)'}}, y:{beginAtZero:true,ticks:{stepSize:1,color:'#5a7fa8',font:{size:11}},grid:{color:'rgba(0,90,148,0.07)'}} } }
   });
 
   // Gráfico pizza
@@ -1592,7 +1592,7 @@ function dispararPushNotif(titulo, corpo) {
   try {
     const n = new Notification(titulo, {
       body: corpo,
-      icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="%23185FA5"/><text x="32" y="44" text-anchor="middle" font-size="32">📦</text></svg>',
+      icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="%230077C2"/><text x="32" y="44" text-anchor="middle" font-size="32">📦</text></svg>',
       tag: titulo, renotify: true,
     });
     n.onclick = () => { window.focus(); n.close(); };

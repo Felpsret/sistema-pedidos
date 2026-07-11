@@ -530,6 +530,7 @@ function renderMeusPedidos() {
     } else if (p.status === 'retirado') {
       banner = `<div style="background:var(--green-light);border-radius:var(--radius);padding:7px 12px;margin-bottom:10px;display:flex;align-items:center;gap:8px;color:var(--green);font-size:13px;font-weight:500"><i class="ti ti-circle-check" style="font-size:15px;flex-shrink:0"></i> Retirado em ${p.dataRetirada||'—'}</div>`;
     }
+    const emSepInfo = (p.status === 'em_separacao' && p.emSeparacaoPor) ? `<div style="font-size:12px;color:var(--text-muted);margin-top:3px"><i class="ti ti-loader" style="font-size:11px;margin-right:3px"></i>Em separação por <strong style="color:var(--brand-dark)">${p.emSeparacaoPor}</strong></div>` : '';
     const sepInfo = p.separadoPor ? `<div style="font-size:12px;color:var(--text-muted);margin-top:3px"><i class="ti ti-user" style="font-size:11px;margin-right:3px"></i>Separado por <strong style="color:var(--brand-dark)">${p.separadoPor}</strong></div>` : '';
     const retInfo = p.retiradoPor ? `<div style="font-size:12px;color:var(--text-muted);margin-top:2px"><i class="ti ti-package-export" style="font-size:11px;margin-right:3px"></i>Retirado por <strong style="color:var(--brand-dark)">${p.retiradoPor}</strong></div>` : '';
     const acoes = p.status === 'pendente' ? `
@@ -543,7 +544,7 @@ function renderMeusPedidos() {
         <div>
           <div style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono)">${p.id}</div>
           <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${p.data}</div>
-          ${sepInfo}${retInfo}
+          ${emSepInfo}${sepInfo}${retInfo}
         </div>
         <div>${badgeFor(p.status)}</div>
       </div>
@@ -1059,6 +1060,7 @@ function renderPedidos() {
 
   el.innerHTML = pagina.map(p => {
     let extra='';
+    if (p.status === 'em_separacao' && p.emSeparacaoPor) extra+=`<div style="font-size:12px;color:var(--text-muted);margin-top:3px"><i class="ti ti-loader" aria-hidden="true" style="font-size:12px;margin-right:3px"></i>Em separação por <strong style="color:var(--brand-dark)">${p.emSeparacaoPor}</strong></div>`;
     if (p.separadoPor) extra+=`<div style="font-size:12px;color:var(--text-muted);margin-top:3px"><i class="ti ti-user" aria-hidden="true" style="font-size:12px;margin-right:3px"></i>Separado por <strong style="color:var(--brand-dark)">${p.separadoPor}</strong></div>`;
     if (p.retiradoPor) extra+=`<div style="font-size:12px;color:var(--text-muted);margin-top:2px"><i class="ti ti-package-export" aria-hidden="true" style="font-size:12px;margin-right:3px"></i>Retirado por <strong style="color:var(--brand-dark)">${p.retiradoPor}</strong> em ${p.dataRetirada}</div>`;
     return `<div class="pedido-card">
@@ -1188,6 +1190,7 @@ window.abrirModal = function(docId) {
   }
   // Informações
   let infos = `<div class="modal-info-row"><i class="ti ti-calendar" aria-hidden="true"></i> Pedido em <strong>${p.data}</strong></div>`;
+  if (p.status === 'em_separacao' && p.emSeparacaoPor) infos += `<div class="modal-info-row"><i class="ti ti-loader" aria-hidden="true"></i> Em separação por <strong>${p.emSeparacaoPor}</strong></div>`;
   if (p.separadoPor) infos += `<div class="modal-info-row"><i class="ti ti-user" aria-hidden="true"></i> Separado por <strong>${p.separadoPor}</strong></div>`;
   if (p.retiradoPor)  infos += `<div class="modal-info-row"><i class="ti ti-package-export" aria-hidden="true"></i> Retirado por <strong>${p.retiradoPor}</strong> em <strong>${p.dataRetirada}</strong></div>`;
   document.getElementById('modal-infos').innerHTML = infos;
@@ -1232,6 +1235,7 @@ function kanbanCard(p) {
   } else if (p.status==='retirado') {
     actions = `<button class="kanban-delete-btn" onclick="deletarRetirado('${p._docId}')"><i class="ti ti-trash" aria-hidden="true"></i> Remover</button>`;
   }
+  const emSepInfo = (p.status === 'em_separacao' && p.emSeparacaoPor) ? `<div class="kanban-sep-by kanban-sep-by-ativo"><i class="ti ti-loader" aria-hidden="true" style="font-size:11px;margin-right:3px"></i>Em separação por <strong>${p.emSeparacaoPor}</strong></div>` : '';
   const sepInfo = p.separadoPor ? `<div class="kanban-sep-by"><i class="ti ti-user" aria-hidden="true" style="font-size:11px;margin-right:3px"></i>Separado por <strong>${p.separadoPor}</strong></div>` : '';
   const retInfo = p.retiradoPor ? `<div class="kanban-sep-by"><i class="ti ti-package-export" aria-hidden="true" style="font-size:11px;margin-right:3px"></i>Retirado por <strong>${p.retiradoPor}</strong>${p.dataRetirada ? ` — ${p.dataRetirada}` : ''}</div>` : '';
   const arrastavel = p.status !== 'retirado';
@@ -1244,7 +1248,7 @@ function kanbanCard(p) {
     <div class="kanban-card-mats">${mats}${mais}</div>
     ${p.obs?`<div style="font-size:11px;color:var(--text-muted);font-style:italic;margin-bottom:6px">${p.obs}</div>`:''}
     <div class="kanban-card-data"><i class="ti ti-clock" aria-hidden="true" style="font-size:11px;margin-right:3px"></i>${p.data}</div>
-    ${sepInfo}${retInfo}
+    ${emSepInfo}${sepInfo}${retInfo}
     ${actions?`<div class="kanban-card-actions" onclick="event.stopPropagation()">${actions}</div>`:''}
   </div>`;
 }

@@ -1084,7 +1084,7 @@ function renderPedidos() {
         <div><div class="pedido-id">${p.id||''}</div><div class="pedido-tecnico">${p.tecnico||'—'}</div>${extra}</div>
         <div style="text-align:right">${badgeFor(p.status)}<div class="pedido-data" style="margin-top:4px">${p.data||''}</div></div>
       </div>
-      <div class="pedido-mats">${(p.itens||[]).map(it=>`<span class="mat-tag">${it.nome} × ${it.qty}</span>`).join('')}</div>
+      <div class="pedido-mats">${(p.itens||[]).filter(it => !fm || (it.nome||'').toLowerCase().includes(fm)).map(it=>`<span class="mat-tag">${it.nome} × ${it.qty}</span>`).join('')}</div>
       ${p.obs?`<div class="pedido-obs"><i class="ti ti-notes" aria-hidden="true" style="font-size:12px;margin-right:4px"></i>${p.obs}</div>`:''}
     </div>`;
   }).join('');

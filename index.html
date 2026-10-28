@@ -228,6 +228,11 @@
           <option value="cancelado">Cancelado</option>
         </select>
       </div>
+      <div class="filter-row">
+        <input class="filter-input" type="text" id="filtro-material" list="filtro-material-list" placeholder="Filtrar por material pedido..." oninput="renderPedidos()" autocomplete="off" />
+        <datalist id="filtro-material-list"></datalist>
+        <button type="button" class="filtro-data-chip filtro-data-chip-clear" onclick="limparFiltroMaterial()"><i class="ti ti-x" aria-hidden="true"></i> Limpar material</button>
+      </div>
       <div class="filter-row filter-row-data">
         <label class="filter-data-label" for="filtro-data-de">De</label>
         <input type="date" id="filtro-data-de" onchange="renderPedidos()" style="padding:8px 10px;font-size:14px;border-radius:var(--radius);border:0.5px solid var(--border-md);background:var(--surface);color:var(--text)" />

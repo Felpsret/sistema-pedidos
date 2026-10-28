@@ -1008,12 +1008,13 @@ window.pedidosPagina = function(delta) {
 function renderPedidos() {
   const ft = document.getElementById('filtro-tecnico').value.toLowerCase();
   const fs = document.getElementById('filtro-status').value;
+  const fm = (document.getElementById('filtro-material').value || '').trim().toLowerCase();
   const fdDe = document.getElementById('filtro-data-de').value;   // "YYYY-MM-DD" ou ""
   const fdAte = document.getElementById('filtro-data-ate').value; // "YYYY-MM-DD" ou ""
   // Reset page when filters change
-  if (renderPedidos._lastFt !== ft || renderPedidos._lastFs !== fs || renderPedidos._lastFdDe !== fdDe || renderPedidos._lastFdAte !== fdAte) {
+  if (renderPedidos._lastFt !== ft || renderPedidos._lastFs !== fs || renderPedidos._lastFm !== fm || renderPedidos._lastFdDe !== fdDe || renderPedidos._lastFdAte !== fdAte) {
     paginaAtual = 1;
-    renderPedidos._lastFt = ft; renderPedidos._lastFs = fs; renderPedidos._lastFdDe = fdDe; renderPedidos._lastFdAte = fdAte;
+    renderPedidos._lastFt = ft; renderPedidos._lastFs = fs; renderPedidos._lastFm = fm; renderPedidos._lastFdDe = fdDe; renderPedidos._lastFdAte = fdAte;
   }
 
   function parsePtBR(str) {
@@ -1032,9 +1033,24 @@ function renderPedidos() {
   const dataDe = parseISO(fdDe);
   const dataAte = parseISO(fdAte);
 
+  // Sugestões do filtro de material: nomes do catálogo + nomes já usados em pedidos
+  const dl = document.getElementById('filtro-material-list');
+  if (dl) {
+    const nomes = new Set();
+    catalogo.forEach(m => m.nome && nomes.add(m.nome));
+    pedidos.forEach(p => (p.itens || []).forEach(it => it.nome && nomes.add(it.nome)));
+    const chave = [...nomes].sort((a,b) => a.localeCompare(b, 'pt-BR')).join('|');
+    if (dl.dataset.chave !== chave) {
+      dl.dataset.chave = chave;
+      dl.innerHTML = [...nomes].sort((a,b) => a.localeCompare(b, 'pt-BR'))
+        .map(n => `<option value="${String(n).replace(/"/g,'&quot;')}"></option>`).join('');
+    }
+  }
+
   const lista = pedidos.filter(p => {
     if (ft && !(p.tecnico || '').toLowerCase().includes(ft)) return false;
     if (fs && p.status !== fs) return false;
+    if (fm && !(p.itens || []).some(it => (it.nome || '').toLowerCase().includes(fm))) return false;
     if (dataDe || dataAte) {
       const d = parsePtBR(p.data);
       if (!d) return false;
@@ -1103,6 +1119,10 @@ window.setFiltroDataRapido = function(tipo) {
   document.getElementById('filtro-data-ate').value = ate ? toISO(ate) : '';
   document.querySelectorAll('.filtro-data-chip').forEach(b => b.classList.remove('active'));
   document.getElementById('chip-'+tipo)?.classList.add('active');
+  renderPedidos();
+};
+window.limparFiltroMaterial = function() {
+  document.getElementById('filtro-material').value = '';
   renderPedidos();
 };
 window.limparFiltroData = function() {

@@ -1079,13 +1079,14 @@ function renderPedidos() {
     if (p.status === 'em_separacao' && p.emSeparacaoPor) extra+=`<div style="font-size:12px;color:var(--text-muted);margin-top:3px"><i class="ti ti-loader" aria-hidden="true" style="font-size:12px;margin-right:3px"></i>Em separação por <strong style="color:var(--brand-dark)">${p.emSeparacaoPor}</strong></div>`;
     if (p.separadoPor) extra+=`<div style="font-size:12px;color:var(--text-muted);margin-top:3px"><i class="ti ti-user" aria-hidden="true" style="font-size:12px;margin-right:3px"></i>Separado por <strong style="color:var(--brand-dark)">${p.separadoPor}</strong></div>`;
     if (p.retiradoPor) extra+=`<div style="font-size:12px;color:var(--text-muted);margin-top:2px"><i class="ti ti-package-export" aria-hidden="true" style="font-size:12px;margin-right:3px"></i>Retirado por <strong style="color:var(--brand-dark)">${p.retiradoPor}</strong> em ${p.dataRetirada}</div>`;
+    if (fm) extra = ''; // com filtro de material: só técnico + material pesquisado
     return `<div class="pedido-card">
       <div class="pedido-header">
         <div><div class="pedido-id">${p.id||''}</div><div class="pedido-tecnico">${p.tecnico||'—'}</div>${extra}</div>
         <div style="text-align:right">${badgeFor(p.status)}<div class="pedido-data" style="margin-top:4px">${p.data||''}</div></div>
       </div>
       <div class="pedido-mats">${(p.itens||[]).filter(it => !fm || (it.nome||'').toLowerCase().includes(fm)).map(it=>`<span class="mat-tag">${it.nome} × ${it.qty}</span>`).join('')}</div>
-      ${p.obs?`<div class="pedido-obs"><i class="ti ti-notes" aria-hidden="true" style="font-size:12px;margin-right:4px"></i>${p.obs}</div>`:''}
+      ${(p.obs && !fm)?`<div class="pedido-obs"><i class="ti ti-notes" aria-hidden="true" style="font-size:12px;margin-right:4px"></i>${p.obs}</div>`:''}
     </div>`;
   }).join('');
 
